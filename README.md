@@ -1,4 +1,5 @@
 # LoupixDeck.Plugin.Claude
+<img width="128" height="128" align="right" src="./icon.png"/>
 
 <img width="307" height="232" alt="Screenshot 2026-10-08 at 17 28 28" src="https://github.com/user-attachments/assets/1c08f4df-4dce-4abe-bce9-99f9524e1fe0" />
 
