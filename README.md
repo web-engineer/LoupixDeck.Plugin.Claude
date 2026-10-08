@@ -1,6 +1,6 @@
 # LoupixDeck.Plugin.Claude
 
-![Claude](icon.png)
+<img width="313" height="84" alt="Screenshot 2026-10-08 at 14 32 56" src="https://github.com/user-attachments/assets/bc79c02b-a58d-46cb-8cf0-9328e412cd7e" />
 
 A [LoupixDeck](https://github.com/RadiatorTwo/LoupixDeck) plugin for day-to-day
 Claude: open Claude (optionally with a prompt), Quick Entry, a Claude Code
