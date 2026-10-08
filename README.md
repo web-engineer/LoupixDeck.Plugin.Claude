@@ -6,7 +6,8 @@ A [LoupixDeck](https://github.com/RadiatorTwo/LoupixDeck) plugin for day-to-day
 Claude: open Claude (optionally with a prompt), Quick Entry, a Claude Code
 session launcher, usage gauges for your 5-hour and 7-day limits, and a key that
 lights when a Claude Code session is waiting for you. Built
-against `LoupixDeck.PluginSdk` 1.28.0 and targets .NET 10; runs on macOS, Linux
+against `LoupixDeck.PluginSdk` 1.29.0 (so it needs a LoupixDeck build with that
+SDK) and targets .NET 10; runs on macOS, Linux
 and Windows, with the limits listed under [Platform support](#platform-support).
 
 This is an independent project and is not affiliated with Anthropic.
@@ -106,10 +107,13 @@ Two buttons on the page:
 
 Command ids are permanent. All commands are in the group "Claude".
 
-Every key the plugin draws on a touch button uses the same look, so Claude keys
-stand out on the deck: a Claude-orange background with a white icon and white
-text. The keys draw themselves, so they are labelled however they were put on
-the button.
+Claude keys share one look so they stand out on the deck: a Claude-orange
+(`#FF551C`) background with white icons and text. On a touch key the launcher
+and usage commands bring that look as ordinary layers when you assign them: an
+icon layer, text layers and, for usage, an indicator layer, with the orange as
+the key's own background colour. Restyle any of them in the button editor. A key
+that had the command before version 0.2.0 has no layers; assign the command
+again to get them. The waiting key still draws itself (see below).
 
 | Command id | Key shows |
 |---|---|
@@ -125,7 +129,6 @@ the button.
 | `Claude.NewCodeSession` | none | all | Opens `claude://code/new`, or `https://claude.ai/code`. |
 | `Claude.ContinueLast` | none | all | Opens `claude://code/continue?session=last`, or `https://claude.ai/code`. |
 | `Claude.Waiting` | none | touch buttons | Stateful key for Claude Code sessions. See below. |
-| `Claude.Usage` | none | touch buttons | Both usage windows as two rings. See below. |
 | `Claude.UsageFiveHour` | none | touch buttons | The 5-hour window: one ring, percentage and time until reset. |
 | `Claude.UsageWeekly` | none | touch buttons | The 7-day window: one ring, percentage and time until reset. |
 
@@ -169,15 +172,20 @@ Focusing:
 
 ### Usage keys
 
-All three keys draw white rings on a darkened track. A full ring is 100 % used.
+`Claude.UsageFiveHour` and `Claude.UsageWeekly` each show one window. The plugin
+reports the value and the key's layers draw it:
 
-- `Claude.Usage` (combined): the outer ring is the 5-hour window, the inner ring
-  the 7-day window, with the 5-hour percentage in the centre.
-- `Claude.UsageFiveHour` and `Claude.UsageWeekly`: one ring for that window, with
-  its label (`5h` or `week`), the percentage and the time until it resets
-  (`↻ 3h12`, `↻ 4d`).
+| Layer | Kind | Shows |
+|---|---|---|
+| Usage ring | Indicator | A white ring on a darkened track; full is 100 % used |
+| Window | Text | `5h` or `week` |
+| Percent | Text, source *Value* | The percentage, e.g. `17%` |
+| Reset | Text, source *Value detail* | Time until the window resets, e.g. `3h12` or `4d` |
 
-Tap any of them to fetch now and show a short overlay with both percentages and
+The combined two-ring key (`Claude.Usage`) from 0.1.0 is gone; use the two keys
+side by side.
+
+Tap either of them to fetch now and show a short overlay with both percentages and
 reset times.
 
 **This is an undocumented endpoint.** The key calls
@@ -190,8 +198,8 @@ leniently; a response without either window shows `Unexpected response`.
 - On HTTP 429 the poll backs off, doubling from 5 minutes up to a 30 minute cap,
   and returns to 5 minutes after a good response.
 - On any failure the last good values stay on the keys, marked `! stale` where the
-  reset time normally is (a `!` under the percentage on the combined key). With no
-  values yet the keys show a dash; the single-window keys add a short error.
+  reset time normally is. With no values yet the keys show a dash and a short
+  error.
 - A 401 or 403 shows `Sign in to Claude Code again`.
 
 **Token lookup order:**
@@ -252,7 +260,7 @@ guide. `.github/workflows/release.yml` calls the SDK's reusable
    [RadiatorTwo/LoupixDeck](https://github.com/RadiatorTwo/LoupixDeck) that adds
    or updates the `claude` entry in `plugin-store.json` (`repository`
    `web-engineer/LoupixDeck.Plugin.Claude`, `commandPrefixes` `["Claude."]`,
-   `minSdkVersion` `1.28.0`), with the `release` object from the workflow's job
+   `minSdkVersion` `1.29.0`), with the `release` object from the workflow's job
    summary.
 
 The repository must be public for the Store and the release download URLs to work.

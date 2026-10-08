@@ -18,11 +18,8 @@ internal sealed class QuickEntryCommand(ClaudePlugin plugin) : LauncherCommandBa
         Group = ClaudePlugin.GroupName,
         Icon = "\U000F07B7", // mdi-console-line
         Description = "Open Claude's Quick Entry bar by pressing its global shortcut (set it in the plugin settings to match Claude › Settings › System › Quick access shortcut).",
-        ButtonLayout = SelfDrawn
+        ButtonLayout = Layout("Claude")
     };
-
-    protected override string Symbol => "console-line";
-    protected override string Caption => "Claude";
 
     public override Task Execute(CommandContext ctx)
     {

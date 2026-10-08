@@ -1,8 +1,8 @@
 {
   "id": "claude",
   "name": "Claude",
-  "version": "0.1.0",
-  "sdkVersion": "1.28.0",
+  "version": "0.2.0",
+  "sdkVersion": "1.29.0",
   "entryAssembly": "LoupixDeck.Plugin.Claude.dll",
   "platform": "All",
   "author": "Craig Lawson",

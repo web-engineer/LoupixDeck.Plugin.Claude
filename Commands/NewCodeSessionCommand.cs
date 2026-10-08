@@ -15,11 +15,8 @@ internal sealed class NewCodeSessionCommand(ClaudePlugin plugin) : LauncherComma
         Group = ClaudePlugin.GroupName,
         Icon = "\U000F0174", // mdi-code-tags
         Description = "Open the Claude desktop app on a new Claude Code session.",
-        ButtonLayout = SelfDrawn
+        ButtonLayout = Layout("New Code")
     };
-
-    protected override string Symbol => "code-tags";
-    protected override string Caption => "New Code";
 
     public override Task Execute(CommandContext ctx)
     {

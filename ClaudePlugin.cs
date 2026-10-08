@@ -41,7 +41,7 @@ public sealed class ClaudePlugin : LoupixPlugin, IPluginSettingsPage
     {
         Id = "claude",
         Name = "Claude",
-        Version = new Version(0, 1, 0),
+        Version = new Version(0, 2, 0),
         SdkVersion = SdkInfo.Version,
         Author = "Craig Lawson",
         Description = "Open Claude and Quick Entry from the deck, watch your usage limits, and get a key that lights when a Claude Code session is waiting for you.",
@@ -96,7 +96,6 @@ public sealed class ClaudePlugin : LoupixPlugin, IPluginSettingsPage
         new NewCodeSessionCommand(this),
         new ContinueLastCommand(this),
         new WaitingCommand(this),
-        new UsageCommand(this, UsageCommand.View.Combined),
         new UsageCommand(this, UsageCommand.View.FiveHour),
         new UsageCommand(this, UsageCommand.View.Weekly)
     ];

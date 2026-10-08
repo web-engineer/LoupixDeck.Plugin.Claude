@@ -18,11 +18,8 @@ internal sealed class OpenCommand(ClaudePlugin plugin) : LauncherCommandBase(plu
         Description = "Open the Claude app on a new chat (the web app when the desktop app is not installed). An optional prompt is prefilled.",
         ParameterTemplate = "({Prompt})",
         Parameters = [new CommandParameter(PromptParameter, typeof(string)) { DefaultValue = string.Empty }],
-        ButtonLayout = SelfDrawn
+        ButtonLayout = Layout("Open Claude")
     };
-
-    protected override string Symbol => "message-text-outline";
-    protected override string Caption => "Open Claude";
 
     public override Task Execute(CommandContext ctx)
     {
