@@ -20,10 +20,6 @@ internal sealed class WaitingCommand(ClaudePlugin plugin) : ClaudeCommandBase(pl
 
     private int _cycle;
 
-    /// <summary>The state last set on each key, so a key is only switched when its state changes.</summary>
-    private readonly Dictionary<string, string> _shownStates = new();
-    private readonly Lock _shownGate = new();
-
     public override CommandDescriptor Descriptor { get; } = new()
     {
         CommandName = Name,
@@ -114,27 +110,15 @@ internal sealed class WaitingCommand(ClaudePlugin plugin) : ClaudeCommandBase(pl
         return null;
     }
 
-    /// <summary>Forgets the states set so far, so every key is switched again on its next poll.</summary>
-    public void ResetShownStates()
-    {
-        lock (_shownGate) _shownStates.Clear();
-    }
-
     /// <summary>
-    /// Switches the key to <paramref name="state"/>, but only when that differs from what this key
-    /// was last switched to. Setting it on every poll would undo the user picking another state in
-    /// the button editor to restyle it.
+    /// Switches the key to <paramref name="state"/> when it shows another one. The host passes the
+    /// state it is rendering as <see cref="CommandContext.StateName"/>, so a key that was reset (the
+    /// command assigned again, a profile loaded) is put right on its next poll.
     /// </summary>
-    private void Show(CommandContext ctx, string state)
+    private static void Show(CommandContext ctx, string state)
     {
-        var key = ctx.ButtonKey ?? string.Empty;
-        lock (_shownGate)
-        {
-            if (_shownStates.TryGetValue(key, out var shown) && shown == state) return;
-            _shownStates[key] = state;
-        }
-
-        ctx.Host.SetActiveButtonState(Name, state);
+        if (!string.Equals(ctx.StateName, state, StringComparison.OrdinalIgnoreCase))
+            ctx.Host.SetActiveButtonState(Name, state);
     }
 
     private static ButtonLayoutDescriptor StateLayout(string background, params ButtonLayerDescriptor[] layers) => new()

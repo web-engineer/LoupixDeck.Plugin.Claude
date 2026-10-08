@@ -140,6 +140,7 @@ again to get them.
 | `Claude.Waiting` | none | touch buttons | Stateful key for Claude Code sessions. See below. |
 | `Claude.UsageFiveHour` | none | touch buttons | The 5-hour window: one ring, percentage and time until reset. |
 | `Claude.UsageWeekly` | none | touch buttons | The 7-day window: one ring, percentage and time until reset. |
+| `Claude.UsageModelWeekly` | `Model` (default `Fable`) | touch buttons | One model's own 7-day limit, e.g. Fable: one ring, percentage and time until reset. |
 
 When nothing could be launched, a touch button briefly shows `Claude not found`.
 
@@ -182,7 +183,11 @@ Focusing:
 
 ### Usage keys
 
-`Claude.UsageFiveHour` and `Claude.UsageWeekly` each show one window. The plugin
+`Claude.UsageFiveHour`, `Claude.UsageWeekly` and `Claude.UsageModelWeekly` each
+show one window. The last one shows the weekly limit Anthropic sets for a single
+model (Fable by default; set the `Model` parameter to the model's name as Claude
+shows it). Accounts without such a limit see a dash. Its *Window* layer reads
+`Fable`; edit that text if you choose another model. The plugin
 reports the value and the key's layers draw it:
 
 | Layer | Kind | Shows |

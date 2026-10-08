@@ -26,5 +26,12 @@ internal sealed record UsageSnapshot(
 {
     public static readonly UsageSnapshot Empty = new(null, null, null, null);
 
+    /// <summary>
+    /// Weekly limits scoped to one model (e.g. "Fable"), keyed by the model's display name,
+    /// case-insensitively. Empty when the account has none.
+    /// </summary>
+    public IReadOnlyDictionary<string, UsageWindow> ModelWeekly { get; init; } =
+        new Dictionary<string, UsageWindow>(StringComparer.OrdinalIgnoreCase);
+
     public bool HasData => FiveHour is not null || SevenDay is not null;
 }

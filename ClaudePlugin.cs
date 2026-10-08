@@ -34,7 +34,6 @@ public sealed class ClaudePlugin : LoupixPlugin, IPluginSettingsPage
     private UsageClient _usage = null!;
     private DemandGate _sessionsGate = null!;
     private DemandGate _usageGate = null!;
-    private WaitingCommand? _waiting;
 
     public ClaudePlugin()
     {
@@ -99,9 +98,10 @@ public sealed class ClaudePlugin : LoupixPlugin, IPluginSettingsPage
         new QuickEntryCommand(this),
         new NewCodeSessionCommand(this),
         new ContinueLastCommand(this),
-        _waiting = new WaitingCommand(this),
+        new WaitingCommand(this),
         new UsageCommand(this, UsageCommand.View.FiveHour),
-        new UsageCommand(this, UsageCommand.View.Weekly)
+        new UsageCommand(this, UsageCommand.View.Weekly),
+        new UsageCommand(this, UsageCommand.View.ModelWeekly)
     ];
 
     public override IReadOnlyList<CommandGroupDescriptor> GetCommandGroups() =>
@@ -259,7 +259,6 @@ public sealed class ClaudePlugin : LoupixPlugin, IPluginSettingsPage
         old.Dispose();
 
         RefreshUsageKeys();
-        _waiting?.ResetShownStates();
         _host.RequestButtonRefresh(WaitingCommand.Name);
     }
 

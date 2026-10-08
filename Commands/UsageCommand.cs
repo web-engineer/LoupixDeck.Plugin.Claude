@@ -4,7 +4,7 @@ using LoupixDeck.PluginSdk;
 namespace LoupixDeck.Plugin.Claude.Commands;
 
 /// <summary>
-/// A usage gauge for one limit window (5-hour or 7-day). The plugin only reports the value; the
+/// A usage gauge for one limit window (5-hour, 7-day, or the 7-day limit of one model). The plugin only reports the value; the
 /// key draws it with ordinary layers it brings along (a ring indicator, the window label, the
 /// percentage and the time until reset), so every part can be restyled in the button editor.
 /// A tap fetches now and shows both windows.
@@ -14,24 +14,35 @@ internal sealed class UsageCommand : ClaudeCommandBase, IValueDisplayCommand
     public enum View
     {
         FiveHour,
-        Weekly
+        Weekly,
+        ModelWeekly
     }
 
     public const string FiveHourName = "Claude.UsageFiveHour";
     public const string WeeklyName = "Claude.UsageWeekly";
+    public const string ModelWeeklyName = "Claude.UsageModelWeekly";
+    public const string ModelParameter = "Model";
 
-    public static readonly IReadOnlyList<string> Names = [FiveHourName, WeeklyName];
+    /// <summary>The model whose weekly limit the per-model key shows unless its Model parameter says otherwise.</summary>
+    private const string DefaultModel = "Fable";
+
+    public static readonly IReadOnlyList<string> Names = [FiveHourName, WeeklyName, ModelWeeklyName];
 
     private readonly View _view;
 
     public UsageCommand(ClaudePlugin plugin, View view) : base(plugin)
     {
         _view = view;
-        Descriptor = view == View.FiveHour
-            ? Describe(FiveHourName, "Usage: 5-hour", "5h",
-                "Shows how much of your 5-hour Claude limit is used and when it resets (reads the Claude Code sign-in). Tap to refresh.")
-            : Describe(WeeklyName, "Usage: weekly", "week",
-                "Shows how much of your 7-day Claude limit is used and when it resets (reads the Claude Code sign-in). Tap to refresh.");
+        Descriptor = view switch
+        {
+            View.FiveHour => Describe(FiveHourName, "Usage: 5-hour", "5h",
+                "Shows how much of your 5-hour Claude limit is used and when it resets (reads the Claude Code sign-in). Tap to refresh."),
+            View.Weekly => Describe(WeeklyName, "Usage: weekly", "week",
+                "Shows how much of your 7-day Claude limit is used and when it resets (reads the Claude Code sign-in). Tap to refresh."),
+            _ => Describe(ModelWeeklyName, "Usage: weekly per model", DefaultModel,
+                "Shows how much of one model's 7-day limit is used (Fable unless you name another model) and when it resets. Tap to refresh.",
+                new CommandParameter(ModelParameter, typeof(string)) { DefaultValue = DefaultModel })
+        };
     }
 
     public override CommandDescriptor Descriptor { get; }
@@ -47,7 +58,12 @@ internal sealed class UsageCommand : ClaudeCommandBase, IValueDisplayCommand
 
         Plugin.UsageGate.Touch();
         var snapshot = Plugin.Usage.Snapshot;
-        var window = _view == View.FiveHour ? snapshot.FiveHour : snapshot.SevenDay;
+        var window = _view switch
+        {
+            View.FiveHour => snapshot.FiveHour,
+            View.Weekly => snapshot.SevenDay,
+            _ => snapshot.ModelWeekly.GetValueOrDefault(FirstParameter(ctx.Parameters) ?? DefaultModel)
+        };
         if (window is null)
         {
             return new AdjustmentValue(double.NaN, "—") { Detail = snapshot.Error is { } error ? Shorten(error) : null };
@@ -75,17 +91,24 @@ internal sealed class UsageCommand : ClaudeCommandBase, IValueDisplayCommand
         var now = DateTimeOffset.Now;
         var text = snapshot.Error is not null && !snapshot.HasData
             ? snapshot.Error
-            : string.Join("\n",
-                snapshot.FiveHour is { } f ? $"5h {f.Utilization:0}% {f.ResetsIn(now)}" : null,
-                snapshot.SevenDay is { } s ? $"7d {s.Utilization:0}% {s.ResetsIn(now)}" : null);
+            : string.Join("\n", new[]
+                {
+                    snapshot.FiveHour is { } f ? $"5h {f.Utilization:0}% {f.ResetsIn(now)}" : null,
+                    snapshot.SevenDay is { } s ? $"7d {s.Utilization:0}% {s.ResetsIn(now)}" : null
+                }
+                .Concat(snapshot.ModelWeekly.Select(m => $"{m.Key} 7d {m.Value.Utilization:0}% {m.Value.ResetsIn(now)}"))
+                .Where(line => line is not null));
         Hint(ctx, text);
     });
 
     private static string Shorten(string error) => error.Length > 14 ? error[..13] + "…" : error;
 
-    private static CommandDescriptor Describe(string name, string displayName, string label, string description) => new()
+    private static CommandDescriptor Describe(string name, string displayName, string label, string description,
+        CommandParameter? parameter = null) => new()
     {
         CommandName = name,
+        ParameterTemplate = parameter is null ? null : $"({{{parameter.Name}}})",
+        Parameters = parameter is null ? [] : [parameter],
         DisplayName = displayName,
         Group = ClaudePlugin.GroupName,
         Icon = "\U000F029A", // mdi-gauge

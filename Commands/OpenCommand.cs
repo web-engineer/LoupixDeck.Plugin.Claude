@@ -24,7 +24,10 @@ internal sealed class OpenCommand(ClaudePlugin plugin) : LauncherCommandBase(plu
     public override Task Execute(CommandContext ctx)
     {
         var path = ClaudeApp.NewChatPath;
-        if (FirstParameter(ctx.Parameters) is { } prompt)
+        // The actions panel fills an empty first parameter with the action's name, which would
+        // prefill "Open Claude"; treat that as no prompt.
+        if (FirstParameter(ctx.Parameters) is { } prompt &&
+            !string.Equals(prompt, Descriptor.DisplayName, StringComparison.OrdinalIgnoreCase))
         {
             path += "?q=" + Uri.EscapeDataString(prompt);
         }

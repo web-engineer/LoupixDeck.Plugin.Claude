@@ -135,7 +135,8 @@ internal sealed class UsageClient : IDisposable
                     lock (_lock) _interval = BaseInterval;
                     if (next.Error is null)
                     {
-                        _logger.Info($"Usage via {source}: 5h {Percent(next.FiveHour)} / 7d {Percent(next.SevenDay)}");
+                        _logger.Info($"Usage via {source}: 5h {Percent(next.FiveHour)} / 7d {Percent(next.SevenDay)}" +
+                                     string.Concat(next.ModelWeekly.Select(m => $" / {m.Key} 7d {Percent(m.Value)}")));
                     }
                 }
             }
@@ -162,7 +163,10 @@ internal sealed class UsageClient : IDisposable
 
     private static string Percent(UsageWindow? w) => w is null ? "?" : $"{w.Utilization:0}%";
 
-    /// <summary>Reads <c>five_hour</c> / <c>seven_day</c> → <c>utilization</c>, <c>resets_at</c>. Anything missing is simply absent.</summary>
+    /// <summary>
+    /// Reads <c>five_hour</c> / <c>seven_day</c> → <c>utilization</c>, <c>resets_at</c>, and the model-scoped
+    /// weekly entries of <c>limits</c>. Anything missing is simply absent.
+    /// </summary>
     internal static UsageSnapshot Parse(string json)
     {
         try
@@ -172,12 +176,47 @@ internal sealed class UsageClient : IDisposable
             var five = Window(root, "five_hour");
             var seven = Window(root, "seven_day");
             if (five is null && seven is null) return new UsageSnapshot(null, null, DateTimeOffset.Now, "Unexpected response");
-            return new UsageSnapshot(five, seven, DateTimeOffset.Now, null);
+            return new UsageSnapshot(five, seven, DateTimeOffset.Now, null) { ModelWeekly = ModelWeekly(root) };
         }
         catch (JsonException)
         {
             return new UsageSnapshot(null, null, DateTimeOffset.Now, "Unexpected response");
         }
+    }
+
+    /// <summary>
+    /// <c>limits</c> entries of kind <c>weekly_scoped</c> with a model scope:
+    /// <c>{"kind":"weekly_scoped","percent":67,"resets_at":"…","scope":{"model":{"display_name":"Fable"}}}</c>.
+    /// </summary>
+    private static Dictionary<string, UsageWindow> ModelWeekly(JsonElement root)
+    {
+        var result = new Dictionary<string, UsageWindow>(StringComparer.OrdinalIgnoreCase);
+        if (!root.TryGetProperty("limits", out var limits) || limits.ValueKind != JsonValueKind.Array) return result;
+
+        foreach (var limit in limits.EnumerateArray())
+        {
+            if (limit.ValueKind != JsonValueKind.Object
+                || !limit.TryGetProperty("kind", out var kind) || kind.GetString() != "weekly_scoped"
+                || !limit.TryGetProperty("scope", out var scope) || scope.ValueKind != JsonValueKind.Object
+                || !scope.TryGetProperty("model", out var model) || model.ValueKind != JsonValueKind.Object
+                || !model.TryGetProperty("display_name", out var name) || name.GetString() is not { Length: > 0 } modelName
+                || !limit.TryGetProperty("percent", out var percent) || percent.ValueKind != JsonValueKind.Number)
+            {
+                continue;
+            }
+
+            result[modelName] = new UsageWindow(Math.Clamp(percent.GetDouble(), 0, 100), ResetsAt(limit));
+        }
+
+        return result;
+    }
+
+    private static DateTimeOffset? ResetsAt(JsonElement w)
+    {
+        if (!w.TryGetProperty("resets_at", out var r)) return null;
+        if (r.ValueKind == JsonValueKind.String && DateTimeOffset.TryParse(r.GetString(), CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var at)) return at;
+        if (r.ValueKind == JsonValueKind.Number && r.TryGetInt64(out var epoch)) return epoch > 10_000_000_000 ? DateTimeOffset.FromUnixTimeMilliseconds(epoch) : DateTimeOffset.FromUnixTimeSeconds(epoch);
+        return null;
     }
 
     private static UsageWindow? Window(JsonElement root, string name)
@@ -190,14 +229,7 @@ internal sealed class UsageClient : IDisposable
         else if (u.ValueKind == JsonValueKind.String && double.TryParse(u.GetString(), NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed)) pct = parsed;
         else return null;
 
-        DateTimeOffset? resets = null;
-        if (w.TryGetProperty("resets_at", out var r))
-        {
-            if (r.ValueKind == JsonValueKind.String && DateTimeOffset.TryParse(r.GetString(), CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var at)) resets = at;
-            else if (r.ValueKind == JsonValueKind.Number && r.TryGetInt64(out var epoch)) resets = epoch > 10_000_000_000 ? DateTimeOffset.FromUnixTimeMilliseconds(epoch) : DateTimeOffset.FromUnixTimeSeconds(epoch);
-        }
-
-        return new UsageWindow(Math.Clamp(pct, 0, 100), resets);
+        return new UsageWindow(Math.Clamp(pct, 0, 100), ResetsAt(w));
     }
 
     public void Dispose()
