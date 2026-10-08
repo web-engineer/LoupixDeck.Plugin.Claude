@@ -15,11 +15,8 @@ internal sealed class ContinueLastCommand(ClaudePlugin plugin) : LauncherCommand
         Group = ClaudePlugin.GroupName,
         Icon = "\U000F02DA", // mdi-history
         Description = "Open the Claude desktop app on your most recent Claude Code session.",
-        ButtonLayout = SelfDrawn
+        ButtonLayout = Layout("Continue")
     };
-
-    protected override string Symbol => "history";
-    protected override string Caption => "Continue";
 
     public override Task Execute(CommandContext ctx)
     {

@@ -4,25 +4,24 @@ using LoupixDeck.PluginSdk;
 namespace LoupixDeck.Plugin.Claude.Commands;
 
 /// <summary>
-/// A launcher key that draws itself in the Claude look (icon and caption, white on orange), so it
-/// is labelled however it was put on the button. Other targets just run the command.
+/// A launcher key. It brings the Claude look as ordinary layers (icon and caption, white on the
+/// Claude-orange background), so the user can restyle each part in the button editor.
 /// </summary>
-internal abstract class LauncherCommandBase(ClaudePlugin plugin) : ClaudeCommandBase(plugin), IDisplayImageCommand
+internal abstract class LauncherCommandBase(ClaudePlugin plugin) : ClaudeCommandBase(plugin)
 {
-    /// <summary>MDI symbol id drawn on the key.</summary>
-    protected abstract string Symbol { get; }
-
-    /// <summary>Text under the icon.</summary>
-    protected abstract string Caption { get; }
-
-    /// <summary>The key never changes; repaint rarely.</summary>
-    public TimeSpan UpdateInterval => TimeSpan.FromHours(1);
-
-    public bool RenderImage(CommandContext ctx, IRenderCanvas canvas)
+    /// <summary>Icon above a caption, white on orange.</summary>
+    protected static ButtonLayoutDescriptor Layout(string caption) => new()
     {
-        ClaudeKey.DrawLauncher(canvas, Symbol, Caption);
-        return true;
-    }
-
-    protected static ButtonLayoutDescriptor SelfDrawn { get; } = new() { Mode = ButtonLayoutMode.None };
+        Mode = ButtonLayoutMode.Custom,
+        BackgroundColor = ClaudeKey.OrangeHex,
+        Layers =
+        [
+            new ButtonLayerDescriptor { Kind = ButtonLayerKind.Symbol, Name = "Icon", IconScale = 0.46, OffsetY = -9, Color = ClaudeKey.WhiteHex },
+            new ButtonLayerDescriptor
+            {
+                Kind = ButtonLayerKind.Text, Name = "Caption", Text = caption, TextSize = 13,
+                OffsetY = 26, BoxWidth = 88, BoxHeight = 22, Color = ClaudeKey.WhiteHex
+            }
+        ]
+    };
 }

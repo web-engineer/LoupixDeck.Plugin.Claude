@@ -8,14 +8,14 @@
     <RootNamespace>LoupixDeck.Plugin.Claude</RootNamespace>
     <EnableDynamicLoading>true</EnableDynamicLoading>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <Authors>Craig Lawson</Authors>
-    <Description>Day-to-day Claude from the deck: open Claude, Quick Entry, usage gauges and a key that lights when a Claude Code session is waiting for you.</Description>
+    <Description>Day-to-day Claude from the deck: open Claude, Quick entry, usage gauges and a key that lights when a Claude Code session is waiting for you.</Description>
   </PropertyGroup>
 
   <ItemGroup>
     <!-- The host provides the SDK assembly at runtime; never ship it next to the plugin. -->
-    <PackageReference Include="LoupixDeck.PluginSdk" Version="1.28.0" ExcludeAssets="runtime" />
+    <PackageReference Include="LoupixDeck.PluginSdk" Version="1.30.0" ExcludeAssets="runtime" />
   </ItemGroup>
 
   <ItemGroup>

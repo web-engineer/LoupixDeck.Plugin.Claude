@@ -3,10 +3,11 @@
 <img width="313" height="84" alt="Screenshot 2026-10-08 at 14 32 56" src="https://github.com/user-attachments/assets/bc79c02b-a58d-46cb-8cf0-9328e412cd7e" />
 
 A [LoupixDeck](https://github.com/RadiatorTwo/LoupixDeck) plugin for day-to-day
-Claude: open Claude (optionally with a prompt), Quick Entry, a Claude Code
+Claude: open Claude (optionally with a prompt), Quick entry, a Claude Code
 session launcher, usage gauges for your 5-hour and 7-day limits, and a key that
 lights when a Claude Code session is waiting for you. Built
-against `LoupixDeck.PluginSdk` 1.28.0 and targets .NET 10; runs on macOS, Linux
+against `LoupixDeck.PluginSdk` 1.30.0 (so it needs a LoupixDeck build with that
+SDK) and targets .NET 10; runs on macOS, Linux
 and Windows, with the limits listed under [Platform support](#platform-support).
 
 This is an independent project and is not affiliated with Anthropic.
@@ -16,9 +17,9 @@ This is an independent project and is not affiliated with Anthropic.
 | Feature | macOS | Windows | Linux |
 |---|---|---|---|
 | Open, New Code session, Continue last | Desktop app (deep link) or browser | Desktop app (deep link) or browser | Browser only |
-| Quick Entry | Yes | Yes | `No desktop app` (needs the desktop app on every OS) |
-| Waiting key: state and caption | Yes | Yes | Yes |
-| Waiting key: tap focuses the session | Yes | Desktop app sessions only; otherwise the key shows the session name | Key shows the session name |
+| Quick entry | Yes | Yes | `No desktop app` (needs the desktop app on every OS) |
+| Current state key: state and project name | Yes | Yes | Yes |
+| Current state key: tap focuses the session | Yes | Desktop app sessions only; otherwise the key shows the session name | Key shows the session name |
 | Usage keys | Yes | Yes | Yes |
 
 Deep links (`claude://`) need the Claude desktop app, which exists for macOS and
@@ -47,11 +48,11 @@ its `.deps.json`, `icon.png` and `plugin.json`.
 
 **Then**, for the keys that need it:
 
-- Quick Entry: set Claude › Settings › System › Quick access shortcut to the
-  same shortcut as the plugin's *Quick Entry shortcut* setting (see below).
+- Quick entry: set Claude › Settings › System › Quick access shortcut to the
+  same shortcut as the plugin's *Quick entry shortcut* setting (see below).
 - Usage: run `claude` once and sign in (`claude`, then `/login`), on every OS.
   The plugin then finds the sign-in itself. See [Usage keys](#usage-keys).
-- The Quick Entry keystroke needs the Accessibility permission that
+- The Quick entry keystroke needs the Accessibility permission that
   LoupixDeck already asks for on macOS.
 
 ## Build from source
@@ -84,10 +85,10 @@ workers restart from the next key render.
 
 | Setting | Key | Default | Notes |
 |---|---|---|---|
-| Quick Entry shortcut | `quick_entry_shortcut` | `Alt+Space` (macOS, i.e. Option+Space), `Ctrl+Alt+Space` (Windows, Linux) | Sent as a key press. Must match Claude › Settings › System › Quick access shortcut. Empty: the key shows `Set shortcut`. |
+| Quick entry shortcut | `quick_entry_shortcut` | `Alt+Space` (macOS, i.e. Option+Space), `Ctrl+Alt+Space` (Windows, Linux) | Sent as a key press. Must match Claude › Settings › System › Quick access shortcut. Empty: the key shows `Set shortcut`. |
 | Show usage | `show_usage` | on | Off: no requests are made and the usage keys show `off`. |
 | Access token (optional) | `access_token` | empty | Only needed when the Claude Code sign-in cannot be found. See [Usage keys](#usage-keys). |
-| Alert me when Claude wants input | `alert_waiting` | on | Off: the session folder is not watched and the waiting key shows `Off`. |
+| Alert me when Claude wants input | `alert_waiting` | on | Off: the session folder is not watched and the Current state key shows `Off`. |
 | Session folder (optional) | `sessions_dir` | empty (`~/.claude/sessions`) | Override only if Claude Code keeps its session files elsewhere. |
 
 Key names in the shortcut field use the host's macro syntax: `Alt` is the
@@ -106,10 +107,13 @@ Two buttons on the page:
 
 Command ids are permanent. All commands are in the group "Claude".
 
-Every key the plugin draws on a touch button uses the same look, so Claude keys
-stand out on the deck: a Claude-orange background with a white icon and white
-text. The keys draw themselves, so they are labelled however they were put on
-the button.
+Claude keys share one look so they stand out on the deck: a Claude-orange
+(`#FF551C`) background with white icons and text. On a touch key the launcher
+and usage commands bring that look as ordinary layers when you assign them: an
+icon layer, text layers and, for usage, an indicator layer, with the orange as
+the key's own background colour. Restyle any of them in the button editor. A key
+that had the command before version 0.2.0 has no layers; assign the command
+again to get them.
 
 | Command id | Key shows |
 |---|---|
@@ -121,29 +125,29 @@ the button.
 | Command id | Parameter | Targets | What it does |
 |---|---|---|---|
 | `Claude.Open` | `Prompt` (optional) | all | Opens a new chat via `claude://claude.ai/new`, or `https://claude.ai/new` without the desktop app. With a prompt it adds `?q=<prompt>` (URL-escaped) to prefill the box. |
-| `Claude.QuickEntry` | none | all | Sends the *Quick Entry shortcut* with `System.KeyCombination(...)`. Quick Entry has no deep link. Without the desktop app it shows `No desktop app`. |
+| `Claude.QuickEntry` | none | all | Sends the *Quick entry shortcut* with `System.KeyCombination(...)`. Quick entry has no deep link. Without the desktop app it shows `No desktop app`. |
 | `Claude.NewCodeSession` | none | all | Opens `claude://code/new`, or `https://claude.ai/code`. |
 | `Claude.ContinueLast` | none | all | Opens `claude://code/continue?session=last`, or `https://claude.ai/code`. |
 | `Claude.Waiting` | none | touch buttons | Stateful key for Claude Code sessions. See below. |
-| `Claude.Usage` | none | touch buttons | Both usage windows as two rings. See below. |
 | `Claude.UsageFiveHour` | none | touch buttons | The 5-hour window: one ring, percentage and time until reset. |
 | `Claude.UsageWeekly` | none | touch buttons | The 7-day window: one ring, percentage and time until reset. |
 
 When nothing could be launched, a touch button briefly shows `Claude not found`.
 
-### Waiting key
+### Current state key
 
-`Claude.Waiting` follows the live sessions:
+`Claude.Waiting` (listed as *Current state*) has three button states that follow the live sessions. Each
+state brings its own layers when you assign the command, and you can restyle
+them per state in the button editor:
 
-| State | Meaning | Key shows |
+| State | Meaning | Layers |
 |---|---|---|
-| `waiting` | At least one session is waiting on a permission prompt or a question | Inverted, orange on white: a bell and the project name; `+N more` under the first project when several |
-| `busy` | Sessions are working, none needs you | An hourglass |
-| `idle` | No session needs you | Zzz; faded when there are no sessions at all |
+| `waiting` | At least one session is waiting on a permission prompt or a question | Inverted, orange on white: a bell, the project name (text source *Value*) and `+N more` when several are waiting (*Value detail*) |
+| `busy` | Sessions are working, none needs you | An hourglass on orange |
+| `idle` | No session needs you | Zzz on orange; a *Value* text shows `Off` while alerts are switched off |
 
-With *Alert me when Claude wants input* off, the key shows a faded crossed-out bell.
-The key also sets its button state (`waiting`, `busy`, `idle`), so anything you
-key to the state in LoupixDeck still follows it.
+A Current state key assigned before version 0.2.0 keeps its old empty states. Clear
+the key and assign the command again to get these layers.
 
 A session that has merely finished its turn is `idle` and does not light the key.
 
@@ -169,15 +173,20 @@ Focusing:
 
 ### Usage keys
 
-All three keys draw white rings on a darkened track. A full ring is 100 % used.
+`Claude.UsageFiveHour` and `Claude.UsageWeekly` each show one window. The plugin
+reports the value and the key's layers draw it:
 
-- `Claude.Usage` (combined): the outer ring is the 5-hour window, the inner ring
-  the 7-day window, with the 5-hour percentage in the centre.
-- `Claude.UsageFiveHour` and `Claude.UsageWeekly`: one ring for that window, with
-  its label (`5h` or `week`), the percentage and the time until it resets
-  (`↻ 3h12`, `↻ 4d`).
+| Layer | Kind | Shows |
+|---|---|---|
+| Usage ring | Indicator | A white ring on a darkened track; full is 100 % used |
+| Window | Text | `5h` or `week` |
+| Percent | Text, source *Value* | The percentage, e.g. `17%` |
+| Reset | Text, source *Value detail* | Time until the window resets, e.g. `3h12` or `4d` |
 
-Tap any of them to fetch now and show a short overlay with both percentages and
+The combined two-ring key (`Claude.Usage`) from 0.1.0 is gone; use the two keys
+side by side.
+
+Tap either of them to fetch now and show a short overlay with both percentages and
 reset times.
 
 **This is an undocumented endpoint.** The key calls
@@ -190,8 +199,8 @@ leniently; a response without either window shows `Unexpected response`.
 - On HTTP 429 the poll backs off, doubling from 5 minutes up to a 30 minute cap,
   and returns to 5 minutes after a good response.
 - On any failure the last good values stay on the keys, marked `! stale` where the
-  reset time normally is (a `!` under the percentage on the combined key). With no
-  values yet the keys show a dash; the single-window keys add a short error.
+  reset time normally is. With no values yet the keys show a dash and a short
+  error.
 - A 401 or 403 shows `Sign in to Claude Code again`.
 
 **Token lookup order:**
@@ -252,7 +261,7 @@ guide. `.github/workflows/release.yml` calls the SDK's reusable
    [RadiatorTwo/LoupixDeck](https://github.com/RadiatorTwo/LoupixDeck) that adds
    or updates the `claude` entry in `plugin-store.json` (`repository`
    `web-engineer/LoupixDeck.Plugin.Claude`, `commandPrefixes` `["Claude."]`,
-   `minSdkVersion` `1.28.0`), with the `release` object from the workflow's job
+   `minSdkVersion` `1.30.0`), with the `release` object from the workflow's job
    summary.
 
 The repository must be public for the Store and the release download URLs to work.

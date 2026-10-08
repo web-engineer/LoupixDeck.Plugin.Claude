@@ -31,6 +31,7 @@ public sealed class ClaudePlugin : LoupixPlugin, IPluginSettingsPage
     private UsageClient _usage = null!;
     private DemandGate _sessionsGate = null!;
     private DemandGate _usageGate = null!;
+    private WaitingCommand? _waiting;
 
     public ClaudePlugin()
     {
@@ -41,10 +42,10 @@ public sealed class ClaudePlugin : LoupixPlugin, IPluginSettingsPage
     {
         Id = "claude",
         Name = "Claude",
-        Version = new Version(0, 1, 0),
+        Version = new Version(0, 2, 0),
         SdkVersion = SdkInfo.Version,
         Author = "Craig Lawson",
-        Description = "Open Claude and Quick Entry from the deck, watch your usage limits, and get a key that lights when a Claude Code session is waiting for you.",
+        Description = "Open Claude and Quick entry from the deck, watch your usage limits, and get a key that lights when a Claude Code session is waiting for you.",
         Icon = LoadEmbeddedIcon("LoupixDeck.Plugin.Claude.icon.png")
     };
 
@@ -95,8 +96,7 @@ public sealed class ClaudePlugin : LoupixPlugin, IPluginSettingsPage
         new QuickEntryCommand(this),
         new NewCodeSessionCommand(this),
         new ContinueLastCommand(this),
-        new WaitingCommand(this),
-        new UsageCommand(this, UsageCommand.View.Combined),
+        _waiting = new WaitingCommand(this),
         new UsageCommand(this, UsageCommand.View.FiveHour),
         new UsageCommand(this, UsageCommand.View.Weekly)
     ];
@@ -106,7 +106,7 @@ public sealed class ClaudePlugin : LoupixPlugin, IPluginSettingsPage
         new CommandGroupDescriptor
         {
             Group = GroupName,
-            Description = "Claude: open the app, Quick Entry, usage limits and a key that lights when Claude Code is waiting for you",
+            Description = "Claude: open the app, Quick entry, usage limits and a key that lights when Claude Code is waiting for you",
             Icon = "\U000F036A" // mdi-message-text-outline
         }
     ];
@@ -154,10 +154,7 @@ public sealed class ClaudePlugin : LoupixPlugin, IPluginSettingsPage
         var waiting = _sessions.Waiting;
         _host.Logger.Info($"Claude Code sessions: {_sessions.Sessions.Count} live, {waiting.Count} waiting" +
                           (waiting.Count > 0 ? $" ({string.Join(", ", waiting.Select(s => s.Name))})" : string.Empty));
-        _host.SetActiveButtonState(WaitingCommand.Name,
-            waiting.Count > 0 ? WaitingCommand.WaitingState
-            : _sessions.Sessions.Any(s => s.Status == SessionStatus.Busy) ? WaitingCommand.BusyState
-            : WaitingCommand.IdleState);
+        // The key re-reads its value now and switches its state there, only when it changed.
         _host.RequestButtonRefresh(WaitingCommand.Name);
     }
 
@@ -170,12 +167,12 @@ public sealed class ClaudePlugin : LoupixPlugin, IPluginSettingsPage
             Key = "launcher",
             Label = "Launcher",
             Kind = PluginSettingKind.Heading,
-            Description = "The Quick Entry shortcut is sent as a key press, so it must match what the Claude app expects. Key names follow the host's macro syntax, e.g. \"Alt+Space\"."
+            Description = "The Quick entry shortcut is sent as a key press, so it must match what the Claude app expects. Key names follow the host's macro syntax, e.g. \"Alt+Space\"."
         },
         new PluginSettingDescriptor
         {
             Key = QuickEntryKey,
-            Label = "Quick Entry shortcut",
+            Label = "Quick entry shortcut",
             Kind = PluginSettingKind.Text,
             DefaultValue = ClaudeApp.DefaultQuickEntryShortcut,
             Description = "Set Claude › Settings › System › Quick access shortcut to the same shortcut (Option+Space recommended on macOS)."
@@ -246,6 +243,7 @@ public sealed class ClaudePlugin : LoupixPlugin, IPluginSettingsPage
         old.Dispose();
 
         RefreshUsageKeys();
+        _waiting?.ResetShownStates();
         _host.RequestButtonRefresh(WaitingCommand.Name);
     }
 
