@@ -16,7 +16,6 @@ public sealed class ClaudePlugin : LoupixPlugin, IPluginSettingsPage
     public const string GroupName = "Claude";
 
     private const string QuickEntryKey = "quick_entry_shortcut";
-    private const string SettingsShortcutKey = "settings_shortcut";
     private const string ShowUsageKey = "show_usage";
     private const string AccessTokenKey = "access_token";
     private const string AlertWaitingKey = "alert_waiting";
@@ -45,7 +44,7 @@ public sealed class ClaudePlugin : LoupixPlugin, IPluginSettingsPage
         Version = new Version(0, 1, 0),
         SdkVersion = SdkInfo.Version,
         Author = "Craig Lawson",
-        Description = "Open Claude, Quick Entry and Settings from the deck, watch your usage limits, and get a key that lights when a Claude Code session is waiting for you.",
+        Description = "Open Claude and Quick Entry from the deck, watch your usage limits, and get a key that lights when a Claude Code session is waiting for you.",
         Icon = LoadEmbeddedIcon("LoupixDeck.Plugin.Claude.icon.png")
     };
 
@@ -59,7 +58,6 @@ public sealed class ClaudePlugin : LoupixPlugin, IPluginSettingsPage
     internal bool UsageEnabled => _host.Settings.Get(ShowUsageKey, true);
     internal bool WaitingEnabled => _host.Settings.Get(AlertWaitingKey, true);
     internal string QuickEntryShortcut => _host.Settings.Get(QuickEntryKey, ClaudeApp.DefaultQuickEntryShortcut) ?? string.Empty;
-    internal string SettingsShortcut => _host.Settings.Get(SettingsShortcutKey, ClaudeApp.DefaultSettingsShortcut) is { Length: > 0 } s ? s : ClaudeApp.DefaultSettingsShortcut;
 
     private string SessionsDirectory =>
         _host.Settings.Get(SessionsDirKey, string.Empty) is { Length: > 0 } dir ? dir : SessionMonitor.DefaultDirectory;
@@ -70,7 +68,7 @@ public sealed class ClaudePlugin : LoupixPlugin, IPluginSettingsPage
     {
         _host = host;
         _usage = new UsageClient(host.Logger, () => host.Settings.Get<string>(AccessTokenKey));
-        _usage.Changed += () => _host.RequestButtonRefresh(UsageCommand.Name);
+        _usage.Changed += RefreshUsageKeys;
         _usageGate = new DemandGate(() => UsageEnabled, StartUsage, StopUsage, UsageIdle);
 
         _sessions = CreateMonitor();
@@ -95,11 +93,12 @@ public sealed class ClaudePlugin : LoupixPlugin, IPluginSettingsPage
     [
         new OpenCommand(this),
         new QuickEntryCommand(this),
-        new SettingsCommand(this),
         new NewCodeSessionCommand(this),
         new ContinueLastCommand(this),
         new WaitingCommand(this),
-        new UsageCommand(this)
+        new UsageCommand(this, UsageCommand.View.Combined),
+        new UsageCommand(this, UsageCommand.View.FiveHour),
+        new UsageCommand(this, UsageCommand.View.Weekly)
     ];
 
     public override IReadOnlyList<CommandGroupDescriptor> GetCommandGroups() =>
@@ -107,8 +106,8 @@ public sealed class ClaudePlugin : LoupixPlugin, IPluginSettingsPage
         new CommandGroupDescriptor
         {
             Group = GroupName,
-            Description = "Claude: open the app, Quick Entry, Settings, usage limits and a key that lights when Claude Code is waiting for you",
-            Icon = "\U000F0D37"
+            Description = "Claude: open the app, Quick Entry, usage limits and a key that lights when Claude Code is waiting for you",
+            Icon = "\U000F036A" // mdi-message-text-outline
         }
     ];
 
@@ -145,6 +144,11 @@ public sealed class ClaudePlugin : LoupixPlugin, IPluginSettingsPage
         _usage.Stop();
     }
 
+    internal void RefreshUsageKeys()
+    {
+        foreach (var name in UsageCommand.Names) _host.RequestButtonRefresh(name);
+    }
+
     private void OnSessionsChanged()
     {
         var waiting = _sessions.Waiting;
@@ -166,7 +170,7 @@ public sealed class ClaudePlugin : LoupixPlugin, IPluginSettingsPage
             Key = "launcher",
             Label = "Launcher",
             Kind = PluginSettingKind.Heading,
-            Description = "Shortcuts are sent as key presses, so they must match what the Claude app expects. Key names follow the host's macro syntax, e.g. \"Alt+Space\" or \"Cmd+Comma\"."
+            Description = "The Quick Entry shortcut is sent as a key press, so it must match what the Claude app expects. Key names follow the host's macro syntax, e.g. \"Alt+Space\"."
         },
         new PluginSettingDescriptor
         {
@@ -174,22 +178,14 @@ public sealed class ClaudePlugin : LoupixPlugin, IPluginSettingsPage
             Label = "Quick Entry shortcut",
             Kind = PluginSettingKind.Text,
             DefaultValue = ClaudeApp.DefaultQuickEntryShortcut,
-            Description = "Set Claude › Settings › General › Quick Entry to the same shortcut (Option+Space recommended on macOS)."
-        },
-        new PluginSettingDescriptor
-        {
-            Key = SettingsShortcutKey,
-            Label = "Settings shortcut",
-            Kind = PluginSettingKind.Text,
-            DefaultValue = ClaudeApp.DefaultSettingsShortcut,
-            Description = "The app's own Settings shortcut; only change it if Claude's differs."
+            Description = "Set Claude › Settings › System › Quick access shortcut to the same shortcut (Option+Space recommended on macOS)."
         },
         new PluginSettingDescriptor
         {
             Key = "usage",
             Label = "Usage limits",
             Kind = PluginSettingKind.Heading,
-            Description = "The usage key asks Anthropic every 5 minutes, using the account Claude Code is signed in with, but only while the key is on screen and the device is on."
+            Description = "The usage keys ask Anthropic every 5 minutes, using the account Claude Code is signed in with, but only while a usage key is on screen and the device is on."
         },
         new PluginSettingDescriptor
         {
@@ -197,7 +193,7 @@ public sealed class ClaudePlugin : LoupixPlugin, IPluginSettingsPage
             Label = "Show usage",
             Kind = PluginSettingKind.Toggle,
             DefaultValue = true,
-            Description = "Off: no requests are made and the key shows \"off\"."
+            Description = "Off: no requests are made and the usage keys show \"off\"."
         },
         new PluginSettingDescriptor
         {
@@ -249,7 +245,7 @@ public sealed class ClaudePlugin : LoupixPlugin, IPluginSettingsPage
         old.Changed -= OnSessionsChanged;
         old.Dispose();
 
-        _host.RequestButtonRefresh(UsageCommand.Name);
+        RefreshUsageKeys();
         _host.RequestButtonRefresh(WaitingCommand.Name);
     }
 

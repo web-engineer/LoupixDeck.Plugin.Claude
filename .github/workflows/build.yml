@@ -1,0 +1,26 @@
+name: Build
+
+# Compiles the plugin on every push and pull request, so a broken build shows up before a release.
+# Packaging and attaching files to a GitHub Release is release.yml's job.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+
+      # LoupixSkipInstall: the runner has no LoupixDeck plugin folder to copy into.
+      - name: Build
+        run: dotnet build LoupixDeck.Plugin.Claude.csproj -c Release -p:LoupixSkipInstall=true -warnaserror

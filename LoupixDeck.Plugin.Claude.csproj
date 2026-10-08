@@ -10,7 +10,7 @@
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <Version>0.1.0</Version>
     <Authors>Craig Lawson</Authors>
-    <Description>Day-to-day Claude from the deck: open Claude, Quick Entry, Settings, a usage gauge and a key that lights when a Claude Code session is waiting for you.</Description>
+    <Description>Day-to-day Claude from the deck: open Claude, Quick Entry, usage gauges and a key that lights when a Claude Code session is waiting for you.</Description>
   </PropertyGroup>
 
   <ItemGroup>

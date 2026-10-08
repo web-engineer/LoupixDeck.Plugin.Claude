@@ -4,65 +4,81 @@ using LoupixDeck.PluginSdk;
 namespace LoupixDeck.Plugin.Claude.Rendering;
 
 /// <summary>
-/// Draws the usage key: an outer ring for the 5-hour window, an inner ring for the 7-day window,
-/// the 5-hour percentage in the middle and the time until it resets underneath. Rings turn amber
-/// above 80 % and red above 95 %, so a glance tells you whether to slow down.
+/// Draws the usage keys in the Claude look: white rings on a darkened track over orange. The
+/// combined key nests the 5-hour (outer) and 7-day (inner) rings around the 5-hour percentage;
+/// a single-window key shows one ring around its label, percentage and time until reset.
+/// Rings are inset well inside the key so the rounded corners of the touch display never crop them.
 /// </summary>
 internal static class UsageRenderer
 {
-    private static readonly PluginColor Background = new(24, 23, 22);
-    private static readonly PluginColor Track = new(58, 56, 54);
-    private static readonly PluginColor Ok = new(96, 180, 120);
-    private static readonly PluginColor Warn = new(232, 168, 56);
-    private static readonly PluginColor Hot = new(226, 76, 60);
-    private static readonly PluginColor Text = PluginColor.White;
-    private static readonly PluginColor Muted = new(160, 156, 150);
-
-    public static void Draw(IRenderCanvas canvas, UsageSnapshot snapshot, DateTimeOffset now)
+    public static void DrawCombined(IRenderCanvas canvas, UsageSnapshot snapshot)
     {
-        canvas.Clear(Background);
-        var w = canvas.Width;
-        var h = canvas.Height;
-        var cx = w / 2;
-        var cy = h / 2;
+        canvas.Clear(ClaudeKey.Orange);
+        var s = ClaudeKey.Scale(canvas);
+        var cx = canvas.Width / 2;
+        var cy = canvas.Height / 2;
 
-        Ring(canvas, cx, cy, Math.Min(w, h) / 2 - 4, 6, snapshot.FiveHour);
-        Ring(canvas, cx, cy, Math.Min(w, h) / 2 - 13, 4, snapshot.SevenDay);
+        Ring(canvas, cx, cy, (int)(31 * s), (int)(6 * s), snapshot.FiveHour);
+        Ring(canvas, cx, cy, (int)(22 * s), (int)(4 * s), snapshot.SevenDay);
 
+        // No room for an error inside the rings; a tap shows it.
         if (!snapshot.HasData)
         {
-            canvas.DrawText("—", 0, cy - 14, w, 28, Muted, 22f, TextHAlign.Center, TextVAlign.Middle, bold: true);
+            canvas.DrawText("—", 0, cy - (int)(9 * s), canvas.Width, (int)(18 * s), ClaudeKey.White, 14 * s, TextHAlign.Center, TextVAlign.Middle, bold: true);
+            return;
+        }
+
+        var main = snapshot.FiveHour ?? snapshot.SevenDay!;
+        canvas.DrawText($"{main.Utilization:0}%", 0, cy - (int)(9 * s), canvas.Width, (int)(18 * s),
+            ClaudeKey.White, 13 * s, TextHAlign.Center, TextVAlign.Middle, bold: true);
+        if (snapshot.Error is not null)
+        {
+            canvas.DrawText("!", 0, cy + (int)(7 * s), canvas.Width, (int)(10 * s), ClaudeKey.White, 9 * s, TextHAlign.Center, TextVAlign.Middle, bold: true);
+        }
+    }
+
+    public static void DrawSingle(IRenderCanvas canvas, UsageSnapshot snapshot, UsageWindow? window, string label, DateTimeOffset now)
+    {
+        canvas.Clear(ClaudeKey.Orange);
+        var s = ClaudeKey.Scale(canvas);
+        var w = canvas.Width;
+        var cx = w / 2;
+        var cy = canvas.Height / 2;
+
+        Ring(canvas, cx, cy, (int)(31 * s), (int)(6 * s), window);
+
+        canvas.DrawText(label, 0, cy - (int)(21 * s), w, (int)(11 * s), ClaudeKey.Faded, 9 * s, TextHAlign.Center, TextVAlign.Middle, bold: true);
+
+        if (window is null)
+        {
+            canvas.DrawText("—", 0, cy - (int)(9 * s), w, (int)(18 * s), ClaudeKey.White, 16 * s, TextHAlign.Center, TextVAlign.Middle, bold: true);
             if (snapshot.Error is not null)
             {
-                canvas.DrawText(ShortError(snapshot.Error), 10, h - 26, w - 20, 14, Muted, 9f, TextHAlign.Center, TextVAlign.Middle);
+                canvas.DrawText(ShortError(snapshot.Error, 10), 0, cy + (int)(9 * s), w, (int)(11 * s), ClaudeKey.White, 8 * s, TextHAlign.Center, TextVAlign.Middle);
             }
 
             return;
         }
 
-        var main = snapshot.FiveHour ?? snapshot.SevenDay!;
-        canvas.DrawText($"{main.Utilization:0}%", 0, cy - 16, w, 24, Text, 20f, TextHAlign.Center, TextVAlign.Middle, bold: true);
+        canvas.DrawText($"{window.Utilization:0}%", 0, cy - (int)(10 * s), w, (int)(20 * s),
+            ClaudeKey.White, 17 * s, TextHAlign.Center, TextVAlign.Middle, bold: true);
 
-        var sub = snapshot.FiveHour is not null && snapshot.SevenDay is not null
-            ? $"wk {snapshot.SevenDay.Utilization:0}%"
-            : snapshot.FiveHour is null ? "week" : "5h";
-        canvas.DrawText(sub, 0, cy + 6, w, 12, Muted, 9f, TextHAlign.Center, TextVAlign.Middle);
-
-        var reset = main.ResetsIn(now);
+        var reset = window.ResetsIn(now);
         var footer = snapshot.Error is not null ? "! stale" : reset.Length > 0 ? $"↻ {reset}" : string.Empty;
         if (footer.Length > 0)
         {
-            canvas.DrawText(footer, 0, cy + 18, w, 12, snapshot.Error is null ? Muted : Warn, 9f, TextHAlign.Center, TextVAlign.Middle);
+            canvas.DrawText(footer, 0, cy + (int)(10 * s), w, (int)(11 * s), ClaudeKey.White, 9 * s, TextHAlign.Center, TextVAlign.Middle);
         }
     }
 
     public static void DrawDisabled(IRenderCanvas canvas)
     {
-        canvas.Clear(Background);
+        canvas.Clear(ClaudeKey.Orange);
+        var s = ClaudeKey.Scale(canvas);
         var cx = canvas.Width / 2;
         var cy = canvas.Height / 2;
-        canvas.DrawCircle(cx, cy, Math.Min(canvas.Width, canvas.Height) / 2 - 6, 4, Track);
-        canvas.DrawText("off", 0, cy - 10, canvas.Width, 20, Muted, 14f, TextHAlign.Center, TextVAlign.Middle, bold: true);
+        canvas.DrawCircle(cx, cy, (int)(31 * s), (int)(6 * s), ClaudeKey.Track);
+        canvas.DrawText("off", 0, cy - (int)(10 * s), canvas.Width, (int)(20 * s), ClaudeKey.White, 14 * s, TextHAlign.Center, TextVAlign.Middle, bold: true);
     }
 
     private static void Ring(IRenderCanvas canvas, int cx, int cy, int radius, int stroke, UsageWindow? window)
@@ -70,15 +86,13 @@ internal static class UsageRenderer
         var x = cx - radius;
         var y = cy - radius;
         var d = radius * 2;
-        canvas.DrawArc(x, y, d, d, -90f, 360f, stroke, Track);
+        canvas.DrawArc(x, y, d, d, -90f, 360f, stroke, ClaudeKey.Track);
         if (window is null) return;
 
-        var sweep = (float)(360.0 * window.Utilization / 100.0);
+        var sweep = (float)(360.0 * Math.Clamp(window.Utilization, 0, 100) / 100.0);
         if (sweep < 2f) sweep = 2f;
-        canvas.DrawArc(x, y, d, d, -90f, sweep, stroke, Colour(window.Utilization));
+        canvas.DrawArc(x, y, d, d, -90f, sweep, stroke, ClaudeKey.White);
     }
 
-    private static PluginColor Colour(double pct) => pct >= 95 ? Hot : pct >= 80 ? Warn : Ok;
-
-    private static string ShortError(string error) => error.Length > 18 ? error[..17] + "…" : error;
+    private static string ShortError(string error, int max) => error.Length > max ? error[..(max - 1)] + "…" : error;
 }

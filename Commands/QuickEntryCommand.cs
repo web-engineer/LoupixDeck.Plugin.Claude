@@ -5,9 +5,9 @@ namespace LoupixDeck.Plugin.Claude.Commands;
 
 /// <summary>
 /// Opens Claude's Quick Entry bar by sending its global shortcut. Quick Entry has no deep link,
-/// so the shortcut set in the plugin settings must match the one in Claude › Settings › General.
+/// so the shortcut set in the plugin settings must match Claude › Settings › System › Quick access shortcut.
 /// </summary>
-internal sealed class QuickEntryCommand(ClaudePlugin plugin) : ClaudeCommandBase(plugin)
+internal sealed class QuickEntryCommand(ClaudePlugin plugin) : LauncherCommandBase(plugin)
 {
     public const string Name = "Claude.QuickEntry";
 
@@ -16,9 +16,13 @@ internal sealed class QuickEntryCommand(ClaudePlugin plugin) : ClaudeCommandBase
         CommandName = Name,
         DisplayName = "Quick Entry",
         Group = ClaudePlugin.GroupName,
-        Icon = "\U000F0D1E", // mdi-flash-outline
-        Description = "Open Claude's Quick Entry bar by pressing its global shortcut (set it in the plugin settings to match Claude › Settings › General)."
+        Icon = "\U000F07B7", // mdi-console-line
+        Description = "Open Claude's Quick Entry bar by pressing its global shortcut (set it in the plugin settings to match Claude › Settings › System › Quick access shortcut).",
+        ButtonLayout = SelfDrawn
     };
+
+    protected override string Symbol => "console-line";
+    protected override string Caption => "Claude";
 
     public override Task Execute(CommandContext ctx)
     {

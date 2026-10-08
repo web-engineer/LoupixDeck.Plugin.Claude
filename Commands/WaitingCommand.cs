@@ -1,14 +1,16 @@
+using LoupixDeck.Plugin.Claude.Rendering;
 using LoupixDeck.Plugin.Claude.Sessions;
 using LoupixDeck.PluginSdk;
 
 namespace LoupixDeck.Plugin.Claude.Commands;
 
 /// <summary>
-/// The "Claude wants you" key. Its button state follows the live sessions (idle / busy / waiting)
-/// so the colours are yours to pick per state; the caption names the session that is waiting.
+/// The "Claude wants you" key. Drawn in the Claude look: an hourglass while sessions work, Zzz when
+/// idle, and inverted (orange on white) with the project name when a session is waiting. The
+/// button state still follows the live sessions (idle / busy / waiting) for anything keyed to it.
 /// Tap to bring that session's window to the front; with several waiting, each tap moves on.
 /// </summary>
-internal sealed class WaitingCommand(ClaudePlugin plugin) : ClaudeCommandBase(plugin), IDisplayCommand
+internal sealed class WaitingCommand(ClaudePlugin plugin) : ClaudeCommandBase(plugin), IDisplayImageCommand
 {
     public const string Name = "Claude.Waiting";
     public const string IdleState = "idle";
@@ -22,14 +24,15 @@ internal sealed class WaitingCommand(ClaudePlugin plugin) : ClaudeCommandBase(pl
         CommandName = Name,
         DisplayName = "Waiting for input",
         Group = ClaudePlugin.GroupName,
-        Icon = "\U000F0027", // mdi-bell-ring-outline
+        Icon = "\U000F009F", // mdi-bell-ring-outline
         Description = "Lights up when a Claude Code session is waiting for you (a permission or a question). Tap to jump to it.",
         States =
         [
             new ButtonStateDescriptor { Name = WaitingState, Description = "A session is waiting for your input" },
             new ButtonStateDescriptor { Name = BusyState, Description = "Sessions are working, nothing to do" },
             new ButtonStateDescriptor { Name = IdleState, Description = "No session needs you" }
-        ]
+        ],
+        ButtonLayout = new ButtonLayoutDescriptor { Mode = ButtonLayoutMode.None }
     };
 
     public override ButtonTargets SupportedTargets => ButtonTargets.TouchButton;
@@ -37,12 +40,13 @@ internal sealed class WaitingCommand(ClaudePlugin plugin) : ClaudeCommandBase(pl
     /// <summary>Keeps the demand gate alive; real updates arrive by push from the session monitor.</summary>
     public TimeSpan UpdateInterval => TimeSpan.FromSeconds(5);
 
-    public string GetText(CommandContext ctx)
+    public bool RenderImage(CommandContext ctx, IRenderCanvas canvas)
     {
         if (!Plugin.WaitingEnabled)
         {
             ctx.Host.SetActiveButtonState(Name, IdleState);
-            return "Off";
+            ClaudeKey.DrawIcon(canvas, "bell-off-outline", ClaudeKey.Faded);
+            return true;
         }
 
         Plugin.SessionsGate.Touch();
@@ -51,12 +55,40 @@ internal sealed class WaitingCommand(ClaudePlugin plugin) : ClaudeCommandBase(pl
         if (waiting.Count > 0)
         {
             ctx.Host.SetActiveButtonState(Name, WaitingState);
-            var first = waiting[0];
-            return waiting.Count > 1 ? $"{waiting.Count} waiting\n{first.ProjectName}" : first.ProjectName;
+            DrawWaiting(canvas, waiting[0].ProjectName, waiting.Count);
+            return true;
         }
 
-        ctx.Host.SetActiveButtonState(Name, sessions.Any(s => s.Status == SessionStatus.Busy) ? BusyState : IdleState);
-        return sessions.Count == 0 ? "No sessions" : sessions.Any(s => s.Status == SessionStatus.Busy) ? "Working" : "Idle";
+        var busy = sessions.Any(s => s.Status == SessionStatus.Busy);
+        ctx.Host.SetActiveButtonState(Name, busy ? BusyState : IdleState);
+        if (busy) ClaudeKey.DrawIcon(canvas, "timer-sand", ClaudeKey.White);
+        else ClaudeKey.DrawIcon(canvas, "sleep", sessions.Count == 0 ? ClaudeKey.Faded : ClaudeKey.White);
+        return true;
+    }
+
+    /// <summary>Inverted so it stands out from the other Claude keys: orange bell and project name on white.</summary>
+    private static void DrawWaiting(IRenderCanvas canvas, string project, int count)
+    {
+        canvas.Clear(ClaudeKey.White);
+        var s = ClaudeKey.Scale(canvas);
+        var w = canvas.Width;
+
+        var icon = (int)(34 * s);
+        canvas.DrawSymbol("bell-ring-outline", (w - icon) / 2, (int)(10 * s), icon, icon, ClaudeKey.Orange);
+
+        var top = (int)(47 * s);
+        var width = w - (int)(10 * s);
+        if (count == 1)
+        {
+            var (size, lines) = TextFit.Wrap(canvas, project, width, 13 * s, 9 * s, 2, bold: true);
+            TextFit.DrawLines(canvas, lines, size, true, 0, top, w, ClaudeKey.Orange);
+            return;
+        }
+
+        // Several waiting: the first project on one line, the rest counted under it.
+        var fit = TextFit.FitSingleLine(canvas, project, width, 13 * s, 8 * s, bold: true);
+        var bottom = TextFit.DrawLines(canvas, [project], fit, true, 0, top, w, ClaudeKey.Orange);
+        canvas.DrawText($"+{count - 1} more", 0, bottom, w, (int)(11 * s), ClaudeKey.Orange, 9 * s, TextHAlign.Center, TextVAlign.Middle);
     }
 
     public override Task Execute(CommandContext ctx) => GuardAsync(ctx, "focus", () =>

@@ -3,9 +3,9 @@
 ![Claude](icon.png)
 
 A [LoupixDeck](https://github.com/RadiatorTwo/LoupixDeck) plugin for day-to-day
-Claude: open Claude (optionally with a prompt), Quick Entry, the app's Settings,
-a Claude Code session launcher, a usage gauge for your 5-hour and 7-day limits,
-and a key that lights when a Claude Code session is waiting for you. Built
+Claude: open Claude (optionally with a prompt), Quick Entry, a Claude Code
+session launcher, usage gauges for your 5-hour and 7-day limits, and a key that
+lights when a Claude Code session is waiting for you. Built
 against `LoupixDeck.PluginSdk` 1.28.0 and targets .NET 10; runs on macOS, Linux
 and Windows, with the limits listed under [Platform support](#platform-support).
 
@@ -17,17 +17,15 @@ This is an independent project and is not affiliated with Anthropic.
 |---|---|---|---|
 | Open, New Code session, Continue last | Desktop app (deep link) or browser | Desktop app (deep link) or browser | Browser only |
 | Quick Entry | Yes | Yes | `No desktop app` (needs the desktop app on every OS) |
-| Claude Settings | Yes | Yes | `No desktop app` |
 | Waiting key: state and caption | Yes | Yes | Yes |
 | Waiting key: tap focuses the session | Yes | Desktop app sessions only; otherwise the key shows the session name | Key shows the session name |
-| Usage key | Yes | Yes | Yes |
+| Usage keys | Yes | Yes | Yes |
 
 Deep links (`claude://`) need the Claude desktop app, which exists for macOS and
 Windows. Without it:
 
 - `Claude.Open` falls back to `https://claude.ai/new`.
 - `Claude.NewCodeSession` and `Claude.ContinueLast` fall back to `https://claude.ai/code`.
-- `Claude.Settings` shows `No desktop app`.
 
 ## Install
 
@@ -49,11 +47,11 @@ its `.deps.json`, `icon.png` and `plugin.json`.
 
 **Then**, for the keys that need it:
 
-- Quick Entry: set Claude › Settings › General › Quick Entry to the same
-  shortcut as the plugin's *Quick Entry shortcut* setting (see below).
+- Quick Entry: set Claude › Settings › System › Quick access shortcut to the
+  same shortcut as the plugin's *Quick Entry shortcut* setting (see below).
 - Usage: run `claude` once and sign in (`claude`, then `/login`), on every OS.
-  The plugin then finds the sign-in itself. See [Usage key](#usage-key).
-- Keystrokes (Quick Entry, Settings) need the Accessibility permission that
+  The plugin then finds the sign-in itself. See [Usage keys](#usage-keys).
+- The Quick Entry keystroke needs the Accessibility permission that
   LoupixDeck already asks for on macOS.
 
 ## Build from source
@@ -86,15 +84,14 @@ workers restart from the next key render.
 
 | Setting | Key | Default | Notes |
 |---|---|---|---|
-| Quick Entry shortcut | `quick_entry_shortcut` | `Alt+Space` (macOS, i.e. Option+Space), `Ctrl+Alt+Space` (Windows, Linux) | Sent as a key press. Must match Claude › Settings › General › Quick Entry. Empty: the key shows `Set shortcut`. |
-| Settings shortcut | `settings_shortcut` | `Cmd+Comma` (macOS), `Ctrl+Comma` (Windows, Linux) | The app's own Settings shortcut; change it only if Claude's differs. Empty falls back to the default. |
-| Show usage | `show_usage` | on | Off: no requests are made and the usage key shows `off`. |
-| Access token (optional) | `access_token` | empty | Only needed when the Claude Code sign-in cannot be found. See [Usage key](#usage-key). |
+| Quick Entry shortcut | `quick_entry_shortcut` | `Alt+Space` (macOS, i.e. Option+Space), `Ctrl+Alt+Space` (Windows, Linux) | Sent as a key press. Must match Claude › Settings › System › Quick access shortcut. Empty: the key shows `Set shortcut`. |
+| Show usage | `show_usage` | on | Off: no requests are made and the usage keys show `off`. |
+| Access token (optional) | `access_token` | empty | Only needed when the Claude Code sign-in cannot be found. See [Usage keys](#usage-keys). |
 | Alert me when Claude wants input | `alert_waiting` | on | Off: the session folder is not watched and the waiting key shows `Off`. |
 | Session folder (optional) | `sessions_dir` | empty (`~/.claude/sessions`) | Override only if Claude Code keeps its session files elsewhere. |
 
-Key names in the shortcut fields use the host's macro syntax: `Cmd` and `Win`
-both mean the Command key on macOS, and the comma key is spelled `Comma`.
+Key names in the shortcut field use the host's macro syntax: `Alt` is the
+Option key on macOS, and `Cmd` and `Win` both mean the Command key.
 
 Two buttons on the page:
 
@@ -109,28 +106,44 @@ Two buttons on the page:
 
 Command ids are permanent. All commands are in the group "Claude".
 
+Every key the plugin draws on a touch button uses the same look, so Claude keys
+stand out on the deck: a Claude-orange background with a white icon and white
+text. The keys draw themselves, so they are labelled however they were put on
+the button.
+
+| Command id | Key shows |
+|---|---|
+| `Claude.Open` | Chat icon, `Open Claude` |
+| `Claude.QuickEntry` | Prompt icon, `Claude` |
+| `Claude.NewCodeSession` | Code icon, `New Code` |
+| `Claude.ContinueLast` | History icon, `Continue` |
+
 | Command id | Parameter | Targets | What it does |
 |---|---|---|---|
 | `Claude.Open` | `Prompt` (optional) | all | Opens a new chat via `claude://claude.ai/new`, or `https://claude.ai/new` without the desktop app. With a prompt it adds `?q=<prompt>` (URL-escaped) to prefill the box. |
 | `Claude.QuickEntry` | none | all | Sends the *Quick Entry shortcut* with `System.KeyCombination(...)`. Quick Entry has no deep link. Without the desktop app it shows `No desktop app`. |
-| `Claude.Settings` | none | all | Activates the desktop app, waits 450 ms, then sends the *Settings shortcut* (Cmd+Comma on macOS, Ctrl+Comma on Windows). Without the app it shows `No desktop app`. |
 | `Claude.NewCodeSession` | none | all | Opens `claude://code/new`, or `https://claude.ai/code`. |
 | `Claude.ContinueLast` | none | all | Opens `claude://code/continue?session=last`, or `https://claude.ai/code`. |
 | `Claude.Waiting` | none | touch buttons | Stateful key for Claude Code sessions. See below. |
-| `Claude.Usage` | none | touch buttons | Image key with usage rings. See below. |
+| `Claude.Usage` | none | touch buttons | Both usage windows as two rings. See below. |
+| `Claude.UsageFiveHour` | none | touch buttons | The 5-hour window: one ring, percentage and time until reset. |
+| `Claude.UsageWeekly` | none | touch buttons | The 7-day window: one ring, percentage and time until reset. |
 
 When nothing could be launched, a touch button briefly shows `Claude not found`.
 
 ### Waiting key
 
-`Claude.Waiting` has three button states, so you choose the colours per state in
-LoupixDeck:
+`Claude.Waiting` follows the live sessions:
 
-| State | Meaning | Caption |
+| State | Meaning | Key shows |
 |---|---|---|
-| `waiting` | At least one session is waiting on a permission prompt or a question | The project name; `N waiting` plus the first project name when several |
-| `busy` | Sessions are working, none needs you | `Working` |
-| `idle` | No session needs you | `Idle`, or `No sessions` |
+| `waiting` | At least one session is waiting on a permission prompt or a question | Inverted, orange on white: a bell and the project name; `+N more` under the first project when several |
+| `busy` | Sessions are working, none needs you | An hourglass |
+| `idle` | No session needs you | Zzz; faded when there are no sessions at all |
+
+With *Alert me when Claude wants input* off, the key shows a faded crossed-out bell.
+The key also sets its button state (`waiting`, `busy`, `idle`), so anything you
+key to the state in LoupixDeck still follows it.
 
 A session that has merely finished its turn is `idle` and does not light the key.
 
@@ -154,13 +167,18 @@ Focusing:
   name instead of focusing a window.
 - **Linux.** The key never focuses a window; it shows the session name.
 
-### Usage key
+### Usage keys
 
-`Claude.Usage` draws two rings: the outer ring is the 5-hour window, the inner
-ring is the 7-day window. Rings are green normally, amber from 80 % and red from
-95 %. The centre shows the 5-hour percentage, the 7-day percentage (`wk NN%`) and
-the time until the 5-hour window resets. Tap to fetch now and show a short
-overlay with both percentages and reset times.
+All three keys draw white rings on a darkened track. A full ring is 100 % used.
+
+- `Claude.Usage` (combined): the outer ring is the 5-hour window, the inner ring
+  the 7-day window, with the 5-hour percentage in the centre.
+- `Claude.UsageFiveHour` and `Claude.UsageWeekly`: one ring for that window, with
+  its label (`5h` or `week`), the percentage and the time until it resets
+  (`↻ 3h12`, `↻ 4d`).
+
+Tap any of them to fetch now and show a short overlay with both percentages and
+reset times.
 
 **This is an undocumented endpoint.** The key calls
 `https://api.anthropic.com/api/oauth/usage`, the same unofficial endpoint Claude
@@ -171,8 +189,9 @@ leniently; a response without either window shows `Unexpected response`.
 - The key polls every 5 minutes while it is in use.
 - On HTTP 429 the poll backs off, doubling from 5 minutes up to a 30 minute cap,
   and returns to 5 minutes after a good response.
-- On any failure the last good values stay on the key with a `! stale` marker where
-  the reset time normally is. With no values yet the key shows a dash and a short error.
+- On any failure the last good values stay on the keys, marked `! stale` where the
+  reset time normally is (a `!` under the percentage on the combined key). With no
+  values yet the keys show a dash; the single-window keys add a short error.
 - A 401 or 403 shows `Sign in to Claude Code again`.
 
 **Token lookup order:**
@@ -201,7 +220,7 @@ Both workers start on demand and stop when nobody is looking:
 | Worker | Runs while | Stops after |
 |---|---|---|
 | Session watcher (file watcher plus a 10 s rescan) | A `Claude.Waiting` key is on the current page and *Alert me when Claude wants input* is on | 30 s without the key being rendered |
-| Usage poller (every 5 min) | A `Claude.Usage` key is on the current page and *Show usage* is on | 12 min without the key being rendered |
+| Usage poller (every 5 min) | A usage key is on the current page and *Show usage* is on | 12 min without the key being rendered |
 
 Both toggles are on by default. With a LoupixDeck build that pauses display
 polling while the device is off, both workers also stop when the device is off.

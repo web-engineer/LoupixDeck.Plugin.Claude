@@ -10,8 +10,6 @@ namespace LoupixDeck.Plugin.Claude.Platform;
 /// </summary>
 internal static class ClaudeApp
 {
-    public const string MacBundleId = "com.anthropic.claudefordesktop";
-
     /// <summary>Deep-link paths the desktop app handles (documented ones plus the app's own Dock actions).</summary>
     public const string NewChatPath = "claude.ai/new";
     public const string NewCodeSessionPath = "code/new";
@@ -25,10 +23,6 @@ internal static class ClaudeApp
     /// <summary>The key-combination string the host's macro engine understands for Quick Entry on this OS.</summary>
     public static string DefaultQuickEntryShortcut =>
         OperatingSystem.IsMacOS() ? "Alt+Space" : "Ctrl+Alt+Space";
-
-    /// <summary>App settings shortcut: Cmd+, on macOS ("Cmd" is spelled Win in the host's key table), Ctrl+, elsewhere.</summary>
-    public static string DefaultSettingsShortcut =>
-        OperatingSystem.IsMacOS() ? "Cmd+Comma" : "Ctrl+Comma";
 
     /// <summary>
     /// Opens a Claude deep link in the desktop app, or the nearest web page when the app is not
@@ -44,28 +38,6 @@ internal static class ClaudeApp
         }
 
         return host.OpenBrowser(url);
-    }
-
-    /// <summary>Brings the desktop app to the front (launching it if needed). No-op without the app.</summary>
-    public static bool Activate(IPluginHost host)
-    {
-        if (!IsDesktopInstalled) return false;
-        try
-        {
-            if (OperatingSystem.IsMacOS())
-            {
-                Run("open", "-b", MacBundleId);
-                return true;
-            }
-
-            // Windows: the protocol handler focuses the running app.
-            return host.OpenBrowser("claude://");
-        }
-        catch (Exception ex)
-        {
-            host.Logger.Warn($"Could not activate Claude: {ex.Message}");
-            return false;
-        }
     }
 
     private static string? WebFallback(string path)

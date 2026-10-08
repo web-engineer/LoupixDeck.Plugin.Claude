@@ -4,7 +4,7 @@ using LoupixDeck.PluginSdk;
 namespace LoupixDeck.Plugin.Claude.Commands;
 
 /// <summary>Reopens the most recent Claude Code session in the desktop app.</summary>
-internal sealed class ContinueLastCommand(ClaudePlugin plugin) : ClaudeCommandBase(plugin)
+internal sealed class ContinueLastCommand(ClaudePlugin plugin) : LauncherCommandBase(plugin)
 {
     public const string Name = "Claude.ContinueLast";
 
@@ -13,9 +13,13 @@ internal sealed class ContinueLastCommand(ClaudePlugin plugin) : ClaudeCommandBa
         CommandName = Name,
         DisplayName = "Continue last session",
         Group = ClaudePlugin.GroupName,
-        Icon = "\U000F0054", // mdi-history
-        Description = "Open the Claude desktop app on your most recent Claude Code session."
+        Icon = "\U000F02DA", // mdi-history
+        Description = "Open the Claude desktop app on your most recent Claude Code session.",
+        ButtonLayout = SelfDrawn
     };
+
+    protected override string Symbol => "history";
+    protected override string Caption => "Continue";
 
     public override Task Execute(CommandContext ctx)
     {

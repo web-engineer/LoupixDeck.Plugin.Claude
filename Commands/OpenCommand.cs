@@ -4,7 +4,7 @@ using LoupixDeck.PluginSdk;
 namespace LoupixDeck.Plugin.Claude.Commands;
 
 /// <summary>Opens Claude on a new chat, optionally prefilled with a prompt.</summary>
-internal sealed class OpenCommand(ClaudePlugin plugin) : ClaudeCommandBase(plugin)
+internal sealed class OpenCommand(ClaudePlugin plugin) : LauncherCommandBase(plugin)
 {
     public const string Name = "Claude.Open";
     public const string PromptParameter = "Prompt";
@@ -14,11 +14,15 @@ internal sealed class OpenCommand(ClaudePlugin plugin) : ClaudeCommandBase(plugi
         CommandName = Name,
         DisplayName = "Open Claude",
         Group = ClaudePlugin.GroupName,
-        Icon = "\U000F0D37", // mdi-message-text-outline
+        Icon = "\U000F036A", // mdi-message-text-outline
         Description = "Open the Claude app on a new chat (the web app when the desktop app is not installed). An optional prompt is prefilled.",
         ParameterTemplate = "({Prompt})",
-        Parameters = [new CommandParameter(PromptParameter, typeof(string)) { DefaultValue = string.Empty }]
+        Parameters = [new CommandParameter(PromptParameter, typeof(string)) { DefaultValue = string.Empty }],
+        ButtonLayout = SelfDrawn
     };
+
+    protected override string Symbol => "message-text-outline";
+    protected override string Caption => "Open Claude";
 
     public override Task Execute(CommandContext ctx)
     {

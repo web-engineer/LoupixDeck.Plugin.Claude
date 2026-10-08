@@ -4,7 +4,7 @@ using LoupixDeck.PluginSdk;
 namespace LoupixDeck.Plugin.Claude.Commands;
 
 /// <summary>Starts a new Claude Code session in the desktop app.</summary>
-internal sealed class NewCodeSessionCommand(ClaudePlugin plugin) : ClaudeCommandBase(plugin)
+internal sealed class NewCodeSessionCommand(ClaudePlugin plugin) : LauncherCommandBase(plugin)
 {
     public const string Name = "Claude.NewCodeSession";
 
@@ -14,8 +14,12 @@ internal sealed class NewCodeSessionCommand(ClaudePlugin plugin) : ClaudeCommand
         DisplayName = "New Code session",
         Group = ClaudePlugin.GroupName,
         Icon = "\U000F0174", // mdi-code-tags
-        Description = "Open the Claude desktop app on a new Claude Code session."
+        Description = "Open the Claude desktop app on a new Claude Code session.",
+        ButtonLayout = SelfDrawn
     };
+
+    protected override string Symbol => "code-tags";
+    protected override string Caption => "New Code";
 
     public override Task Execute(CommandContext ctx)
     {
