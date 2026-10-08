@@ -20,7 +20,7 @@ internal static class ClaudeApp
 
     public static bool IsDesktopInstalled => DesktopInstalled.Value;
 
-    /// <summary>The key-combination string the host's macro engine understands for Quick Entry on this OS.</summary>
+    /// <summary>The key-combination string the host's macro engine understands for Quick entry on this OS.</summary>
     public static string DefaultQuickEntryShortcut =>
         OperatingSystem.IsMacOS() ? "Alt+Space" : "Ctrl+Alt+Space";
 

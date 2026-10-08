@@ -4,7 +4,7 @@ using LoupixDeck.PluginSdk;
 namespace LoupixDeck.Plugin.Claude.Commands;
 
 /// <summary>
-/// Opens Claude's Quick Entry bar by sending its global shortcut. Quick Entry has no deep link,
+/// Opens Claude's Quick entry bar by sending its global shortcut. Quick entry has no deep link,
 /// so the shortcut set in the plugin settings must match Claude › Settings › System › Quick access shortcut.
 /// </summary>
 internal sealed class QuickEntryCommand(ClaudePlugin plugin) : LauncherCommandBase(plugin)
@@ -14,10 +14,10 @@ internal sealed class QuickEntryCommand(ClaudePlugin plugin) : LauncherCommandBa
     public override CommandDescriptor Descriptor { get; } = new()
     {
         CommandName = Name,
-        DisplayName = "Quick Entry",
+        DisplayName = "Quick entry",
         Group = ClaudePlugin.GroupName,
         Icon = "\U000F07B7", // mdi-console-line
-        Description = "Open Claude's Quick Entry bar by pressing its global shortcut (set it in the plugin settings to match Claude › Settings › System › Quick access shortcut).",
+        Description = "Open Claude's Quick entry bar by pressing its global shortcut (set it in the plugin settings to match Claude › Settings › System › Quick access shortcut).",
         ButtonLayout = Layout("Claude")
     };
 
