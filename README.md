@@ -98,7 +98,7 @@ workers restart from the next key render.
 Key names in the shortcut field use the host's macro syntax: `Alt` is the
 Option key on macOS, and `Cmd` and `Win` both mean the Command key.
 
-Two buttons on the page:
+Buttons on the page:
 
 - **Test usage lookup** resolves the token, queries the usage endpoint and reports
   where the token came from and both windows, for example
@@ -106,6 +106,11 @@ Two buttons on the page:
   or the reason it failed.
 - **List Claude Code sessions** reports each live session as
   `name (project): busy|waiting|idle`, or that there are none.
+- **Get support** opens [web-engineer.co.uk/contact](https://web-engineer.co.uk/contact),
+  with our public Slack and our tracker.
+- **Report a bug or request a feature** opens this repository's
+  [GitHub issues](https://github.com/web-engineer/LoupixDeck.Plugin.Claude/issues).
+  Please report security issues privately through the contact form instead.
 
 ## Commands
 

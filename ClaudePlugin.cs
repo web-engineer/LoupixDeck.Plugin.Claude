@@ -21,6 +21,9 @@ public sealed class ClaudePlugin : LoupixPlugin, IPluginSettingsPage
     private const string AlertWaitingKey = "alert_waiting";
     private const string SessionsDirKey = "sessions_dir";
 
+    private const string SupportUrl = "https://web-engineer.co.uk/contact";
+    private const string IssuesUrl = "https://github.com/web-engineer/LoupixDeck.Plugin.Claude/issues";
+
     /// <summary>Demand windows: a worker stops this long after its key was last rendered.</summary>
     private static readonly TimeSpan SessionsIdle = TimeSpan.FromSeconds(30);
     private static readonly TimeSpan UsageIdle = TimeSpan.FromMinutes(12);
@@ -222,14 +225,27 @@ public sealed class ClaudePlugin : LoupixPlugin, IPluginSettingsPage
             Kind = PluginSettingKind.Text,
             DefaultValue = string.Empty,
             Description = "Leave blank for ~/.claude/sessions."
+        },
+        new PluginSettingDescriptor
+        {
+            Key = "about",
+            Label = "About and support",
+            Kind = PluginSettingKind.Heading,
+            Description = "Made by web-engineer. For help, our public Slack and our tracker are on the contact page. " +
+                          "Report bugs and request features on GitHub; please report security issues privately through the contact form."
         }
     ];
 
     public IReadOnlyList<PluginSettingAction> SettingsActions =>
     [
         new PluginSettingAction { Label = "Test usage lookup", Invoke = TestUsageAsync },
-        new PluginSettingAction { Label = "List Claude Code sessions", Invoke = ListSessionsAsync }
+        new PluginSettingAction { Label = "List Claude Code sessions", Invoke = ListSessionsAsync },
+        new PluginSettingAction { Label = "Get support", Invoke = () => OpenLink(SupportUrl) },
+        new PluginSettingAction { Label = "Report a bug or request a feature", Invoke = () => OpenLink(IssuesUrl) }
     ];
+
+    private Task<string> OpenLink(string url) =>
+        Task.FromResult(_host.OpenBrowser(url) ? $"Opened {url}" : $"Could not open a browser; visit {url}");
 
     public void OnSettingsSaved()
     {
