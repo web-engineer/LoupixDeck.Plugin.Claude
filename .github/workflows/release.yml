@@ -16,4 +16,6 @@ jobs:
     uses: RadiatorTwo/LoupixDeck.PluginSdk/.github/workflows/plugin-release.yml@master
     with:
       project: LoupixDeck.Plugin.Claude.csproj
-      build-sdk: false   # the SDK version we reference is published on nuget.org
+      # SDK 1.30.0 is not on nuget.org yet: build it from source (see nuget.config). Set back to
+      # false once it is published.
+      build-sdk: true
