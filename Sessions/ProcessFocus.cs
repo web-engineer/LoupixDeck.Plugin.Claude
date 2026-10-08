@@ -20,6 +20,7 @@ internal static class ProcessFocus
         if (OperatingSystem.IsMacOS())
         {
             var bundle = FindOwningBundle(session.Pid);
+            host.Logger.Info($"Focus {session.Name}: pid {session.Pid} belongs to {bundle ?? "no app bundle"}");
             if (bundle is not null)
             {
                 if (bundle.EndsWith("/Claude.app", StringComparison.OrdinalIgnoreCase))

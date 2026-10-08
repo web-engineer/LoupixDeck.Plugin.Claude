@@ -16,7 +16,7 @@ This is an independent project and is not affiliated with Anthropic.
 | Feature | macOS | Windows | Linux |
 |---|---|---|---|
 | Open, New Code session, Continue last | Desktop app (deep link) or browser | Desktop app (deep link) or browser | Browser only |
-| Quick Entry | Yes | Yes | `No desktop app` |
+| Quick Entry | Yes | Yes | `No desktop app` (needs the desktop app on every OS) |
 | Claude Settings | Yes | Yes | `No desktop app` |
 | Waiting key: state and caption | Yes | Yes | Yes |
 | Waiting key: tap focuses the session | Yes | Desktop app sessions only; otherwise the key shows the session name | Key shows the session name |
@@ -112,7 +112,7 @@ Command ids are permanent. All commands are in the group "Claude".
 | Command id | Parameter | Targets | What it does |
 |---|---|---|---|
 | `Claude.Open` | `Prompt` (optional) | all | Opens a new chat via `claude://claude.ai/new`, or `https://claude.ai/new` without the desktop app. With a prompt it adds `?q=<prompt>` (URL-escaped) to prefill the box. |
-| `Claude.QuickEntry` | none | all | Sends the *Quick Entry shortcut* with `System.KeyCombination(...)`. Quick Entry has no deep link. Linux shows `No desktop app`. |
+| `Claude.QuickEntry` | none | all | Sends the *Quick Entry shortcut* with `System.KeyCombination(...)`. Quick Entry has no deep link. Without the desktop app it shows `No desktop app`. |
 | `Claude.Settings` | none | all | Activates the desktop app, waits 450 ms, then sends the *Settings shortcut* (Cmd+Comma on macOS, Ctrl+Comma on Windows). Without the app it shows `No desktop app`. |
 | `Claude.NewCodeSession` | none | all | Opens `claude://code/new`, or `https://claude.ai/code`. |
 | `Claude.ContinueLast` | none | all | Opens `claude://code/continue?session=last`, or `https://claude.ai/code`. |
@@ -171,8 +171,8 @@ leniently; a response without either window shows `Unexpected response`.
 - The key polls every 5 minutes while it is in use.
 - On HTTP 429 the poll backs off, doubling from 5 minutes up to a 30 minute cap,
   and returns to 5 minutes after a good response.
-- On any failure the last good values stay on the key with a `!` marker where the
-  reset time normally is. With no values yet the key shows a dash and a short error.
+- On any failure the last good values stay on the key with a `! stale` marker where
+  the reset time normally is. With no values yet the key shows a dash and a short error.
 - A 401 or 403 shows `Sign in to Claude Code again`.
 
 **Token lookup order:**

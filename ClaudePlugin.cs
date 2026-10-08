@@ -148,6 +148,8 @@ public sealed class ClaudePlugin : LoupixPlugin, IPluginSettingsPage
     private void OnSessionsChanged()
     {
         var waiting = _sessions.Waiting;
+        _host.Logger.Info($"Claude Code sessions: {_sessions.Sessions.Count} live, {waiting.Count} waiting" +
+                          (waiting.Count > 0 ? $" ({string.Join(", ", waiting.Select(s => s.Name))})" : string.Empty));
         _host.SetActiveButtonState(WaitingCommand.Name,
             waiting.Count > 0 ? WaitingCommand.WaitingState
             : _sessions.Sessions.Any(s => s.Status == SessionStatus.Busy) ? WaitingCommand.BusyState

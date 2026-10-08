@@ -72,6 +72,7 @@ internal sealed class WaitingCommand(ClaudePlugin plugin) : ClaudeCommandBase(pl
         var waiting = Plugin.Sessions.Waiting;
         if (waiting.Count == 0)
         {
+            ctx.Host.Logger.Info($"Waiting key tapped: nothing waiting ({Plugin.Sessions.Sessions.Count} live sessions in {Plugin.Sessions.Directory})");
             Hint(ctx, "Nothing waiting");
             return Task.CompletedTask;
         }
