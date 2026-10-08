@@ -19,9 +19,10 @@ internal static class ClaudeApp
     /// <summary>
     /// App pages opened through the desktop app's claude.ai route (any claude.ai path loads in the
     /// app). Scheduled tasks live under the app's own Claude Code path, /epitaxy; claude.ai on the
-    /// web redirects that to /code.
+    /// web redirects that to /code. Design is the sidebar's Artifacts view filtered to Claude Design;
+    /// plain /design is the standalone homepage, which the app does not route (it lands on Routines).
     /// </summary>
-    public const string DesignPath = "claude.ai/design";
+    public const string DesignPath = "claude.ai/artifacts/design";
     public const string CustomizePath = "claude.ai/customize";
     public const string ScheduledPath = "claude.ai/epitaxy/scheduled";
 
