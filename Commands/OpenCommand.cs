@@ -3,36 +3,27 @@ using LoupixDeck.PluginSdk;
 
 namespace LoupixDeck.Plugin.Claude.Commands;
 
-/// <summary>Opens Claude on a new chat, optionally prefilled with a prompt.</summary>
+/// <summary>Opens Claude on a new, empty chat.</summary>
 internal sealed class OpenCommand(ClaudePlugin plugin) : LauncherCommandBase(plugin)
 {
     public const string Name = "Claude.Open";
-    public const string PromptParameter = "Prompt";
 
+    // No prompt parameter: a prefilled prompt makes Claude warn that a link is filling in the
+    // message, and the actions panel would fill an empty one with the action's name anyway.
+    // Keys saved with a parameter, e.g. "Claude.Open(Open Claude)", still run; it is ignored.
     public override CommandDescriptor Descriptor { get; } = new()
     {
         CommandName = Name,
         DisplayName = "Open Claude",
         Group = ClaudePlugin.GroupName,
         Icon = "\U000F036A", // mdi-message-text-outline
-        Description = "Open the Claude app on a new chat (the web app when the desktop app is not installed). An optional prompt is prefilled.",
-        ParameterTemplate = "({Prompt})",
-        Parameters = [new CommandParameter(PromptParameter, typeof(string)) { DefaultValue = string.Empty }],
+        Description = "Open the Claude app on a new chat (the web app when the desktop app is not installed).",
         ButtonLayout = Layout("Open Claude")
     };
 
     public override Task Execute(CommandContext ctx)
     {
-        var path = ClaudeApp.NewChatPath;
-        // The actions panel fills an empty first parameter with the action's name, which would
-        // prefill "Open Claude"; treat that as no prompt.
-        if (FirstParameter(ctx.Parameters) is { } prompt &&
-            !string.Equals(prompt, Descriptor.DisplayName, StringComparison.OrdinalIgnoreCase))
-        {
-            path += "?q=" + Uri.EscapeDataString(prompt);
-        }
-
-        if (!ClaudeApp.OpenLink(ctx.Host, path)) Hint(ctx, "Claude not found");
+        if (!ClaudeApp.OpenLink(ctx.Host, ClaudeApp.NewChatPath)) Hint(ctx, "Claude not found");
         return Task.CompletedTask;
     }
 }

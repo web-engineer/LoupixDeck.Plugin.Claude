@@ -130,13 +130,19 @@ again to get them.
 | `Claude.QuickEntry` | Prompt icon, `Claude` |
 | `Claude.NewCodeSession` | Code icon, `New Code` |
 | `Claude.ContinueLast` | History icon, `Continue` |
+| `Claude.Design` | Palette icon, `Design` |
+| `Claude.Customize` | Sliders icon, `Customize` |
+| `Claude.Scheduled` | Calendar icon, `Scheduled` |
 
 | Command id | Parameter | Targets | What it does |
 |---|---|---|---|
-| `Claude.Open` | `Prompt` (optional) | all | Opens a new chat via `claude://claude.ai/new`, or `https://claude.ai/new` without the desktop app. With a prompt it adds `?q=<prompt>` (URL-escaped) to prefill the box. |
+| `Claude.Open` | none | all | Opens an empty new chat via `claude://claude.ai/new`, or `https://claude.ai/new` without the desktop app. |
 | `Claude.QuickEntry` | none | all | Sends the *Quick entry shortcut* with `System.KeyCombination(...)`. Quick entry has no deep link. Without the desktop app it shows `No desktop app`. |
 | `Claude.NewCodeSession` | none | all | Opens `claude://code/new`, or `https://claude.ai/code`. |
 | `Claude.ContinueLast` | none | all | Opens `claude://code/continue?session=last`, or `https://claude.ai/code`. |
+| `Claude.Design` | none | all | Opens Claude's Design page: `claude://claude.ai/design`, or `https://claude.ai/design`. |
+| `Claude.Customize` | none | all | Opens Customize (skills, connectors, plugins): `claude://claude.ai/customize`, or `https://claude.ai/customize`. |
+| `Claude.Scheduled` | none | all | Opens Claude Code's scheduled tasks: `claude://claude.ai/epitaxy/scheduled`, or the same page on claude.ai. |
 | `Claude.Waiting` | none | touch buttons | Stateful key for Claude Code sessions. See below. |
 | `Claude.UsageFiveHour` | none | touch buttons | The 5-hour window: one ring, percentage and time until reset. |
 | `Claude.UsageWeekly` | none | touch buttons | The 7-day window: one ring, percentage and time until reset. |
