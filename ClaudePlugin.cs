@@ -44,7 +44,7 @@ public sealed class ClaudePlugin : LoupixPlugin, IPluginSettingsPage
         Name = "Claude",
         Version = new Version(0, 2, 0),
         SdkVersion = SdkInfo.Version,
-        Author = "Craig Lawson",
+        Author = "web-engineer",
         Description = "Open Claude and Quick entry from the deck, watch your usage limits, and get a key that lights when a Claude Code session is waiting for you.",
         Icon = LoadEmbeddedIcon("LoupixDeck.Plugin.Claude.icon.png")
     };

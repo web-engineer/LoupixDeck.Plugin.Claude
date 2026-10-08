@@ -9,7 +9,10 @@
     <EnableDynamicLoading>true</EnableDynamicLoading>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <Version>0.2.0</Version>
-    <Authors>Craig Lawson</Authors>
+    <Authors>web-engineer</Authors>
+    <Company>Web-Engine Limited</Company>
+    <Copyright>Copyright (c) 2026 Web-Engine Limited, trading as web-engineer</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Description>Day-to-day Claude from the deck: open Claude, Quick entry, usage gauges and a key that lights when a Claude Code session is waiting for you.</Description>
   </PropertyGroup>
 

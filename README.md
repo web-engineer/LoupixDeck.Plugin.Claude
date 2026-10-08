@@ -10,7 +10,11 @@ against `LoupixDeck.PluginSdk` 1.30.0 (so it needs a LoupixDeck build with that
 SDK) and targets .NET 10; runs on macOS, Linux
 and Windows, with the limits listed under [Platform support](#platform-support).
 
-This is an independent project and is not affiliated with Anthropic.
+Made by [**web-engineer**](https://www.web-engineer.co.uk/)
+([@web-engineer](https://github.com/web-engineer)).
+
+This is an independent project and is not affiliated with or endorsed by
+Anthropic. Claude is a trademark of Anthropic.
 
 ## Platform support
 
@@ -273,3 +277,16 @@ Plugin lines are prefixed `plugin:claude` in LoupixDeck's log
 the plugin logs whether the Claude desktop app was found. Workers log when they
 start and stop, a successful usage lookup logs the two percentages and the token
 source (never the token), and a 429 is logged as a warning.
+
+## Licence and credits
+
+MIT licensed: see [LICENSE](LICENSE). Copyright (c) 2026 Web-Engine Limited,
+trading as [web-engineer](https://www.web-engineer.co.uk/).
+
+Built on [LoupixDeck](https://github.com/RadiatorTwo/LoupixDeck) and its
+[Plugin SDK](https://github.com/RadiatorTwo/LoupixDeck.PluginSdk) by RadiatorTwo,
+both MIT licensed. The SDK is not redistributed with this plugin; LoupixDeck
+supplies it at runtime.
+
+Need help with a LoupixDeck plugin, a Claude integration or something else?
+[Get in touch with web-engineer](https://www.web-engineer.co.uk/).
