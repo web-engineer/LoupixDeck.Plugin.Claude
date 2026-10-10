@@ -264,29 +264,6 @@ the machine. Session files in `~/.claude/sessions` are read locally and never
 sent anywhere. Launcher commands open `claude://` links or claude.ai pages
 through your system, which is the same as opening them yourself.
 
-## Releasing and the Plugin Store
-
-Packaging follows the SDK's
-[Packaging & Distribution](https://github.com/RadiatorTwo/LoupixDeck.PluginSdk/blob/master/docs/Packaging-and-Distribution.md)
-guide. `.github/workflows/release.yml` calls the SDK's reusable
-`plugin-release.yml`; nothing else is needed in this repository.
-
-1. Bump the version in three places so they match: `plugin.json` (`version`),
-   `LoupixDeck.Plugin.Claude.csproj` (`<Version>`) and
-   `ClaudePlugin.Metadata.Version`.
-2. Push, then publish a GitHub Release whose tag is exactly `v<version>`, with
-   release notes.
-3. The workflow attaches `claude-<version>-any.zip`, `plugin.json` and
-   `SHA256SUMS` to the release.
-4. First listing, and every later release: open a pull request against
-   [RadiatorTwo/LoupixDeck](https://github.com/RadiatorTwo/LoupixDeck) that adds
-   or updates the `claude` entry in `plugin-store.json` (`repository`
-   `web-engineer/LoupixDeck.Plugin.Claude`, `commandPrefixes` `["Claude."]`,
-   `minSdkVersion` `1.30.0`), with the `release` object from the workflow's job
-   summary.
-
-The repository must be public for the Store and the release download URLs to work.
-
 ## Logging
 
 Plugin lines are prefixed `plugin:claude` in LoupixDeck's log
